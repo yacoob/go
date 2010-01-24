@@ -1,0 +1,8 @@
+Well, it works. What's left to do:
+
+* validation and sanitization of parameters
+* better templates
+* use sqlite instead of dbm
+
+And, last but not least:
+* integrate Trampolina :)

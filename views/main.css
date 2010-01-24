@@ -1,0 +1,33 @@
+body {
+       background: #3D8ABA;
+       color: #E0B64A;
+       width: 80%;
+       margin: 0% 10%;
+     }
+
+a:link {
+    color: black;
+}
+
+a:visited {
+    color: #BABABA; /* Babarybo, jestes smutna i nieszczesliwa */
+}
+
+li:hover {
+    background: #4AA7E1;
+}
+
+a:hover {
+    color: #454545;
+}
+
+h1 {
+    font-family: sans-serif;
+}
+
+pre {
+    border: red;
+    background: #4AA7E1;
+    padding: 3ex 3em;
+    color: black;
+}
