@@ -91,10 +91,10 @@ def command(cmd):
         bottle.redirect('/and/add');
 
 
-@bottle.route('/and/css')
-def css():
-    # FIXME: use proper path here
-    bottle.send_file('main.css', './views/')
+@bottle.route('/static/:filename')
+def static_file(filename):
+    # FIXME: use proper root path here
+    bottle.send_file(filename, root='./static/');
 
 
 def init(app):

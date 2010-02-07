@@ -1,6 +1,6 @@
 <html><head>
 <title>Go</title>
-<link type="text/css" rel="stylesheet" href="/and/css" />
+<link type="text/css" rel="stylesheet" href="/static/main.css" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head><body>
 <h1>Existing shortcuts</h1>

@@ -1,6 +1,6 @@
 <html><head>
 <title>Go</title>
-<link type="text/css" rel="stylesheet" href="/and/css" />
+<link type="text/css" rel="stylesheet" href="/static/main.css" />
 </head><body>
 <h1>{{message}}</h1>
 <form method="GET" action="/and/add">
