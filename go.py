@@ -93,7 +93,7 @@ def go_command(cmd):
 
     else:
         # default endpoint
-        bottle.redirect('/and/add');
+        bottle.redirect('/and/list');
 
 
 @bottle.route('/hop/(?P<cmd>.*)')
