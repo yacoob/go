@@ -1,5 +1,5 @@
 <html><head>
-<title>Go</title>
+<title>Go {{title}}</title>
 <link type="text/css" rel="stylesheet" href="/static/main.css" />
 </head><body>
 <h1>{{message}}</h1>

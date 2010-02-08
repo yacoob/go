@@ -3,7 +3,7 @@ body {
        color: #E0B64A;
        width: 80%;
        margin: 0% 10%;
-     }
+}
 
 a:link {
     color: black;
@@ -26,7 +26,6 @@ h1 {
 }
 
 pre {
-    border: red;
     background: #4AA7E1;
     padding: 3ex 3em;
     color: black;
