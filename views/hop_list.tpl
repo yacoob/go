@@ -1,5 +1,6 @@
 <html><head>
 <link rel="alternate" type="application/rss+xml" href="/hop/rss" title="URLs feed">
+<link rel="icon" type="image/vnd.microsoft.icon" href="/static/favicon.ico">
 <link type="text/css" rel="stylesheet" href="/static/main.css" />
 <title>Go {{title}}</title>
 </head><body>

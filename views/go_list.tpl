@@ -1,5 +1,6 @@
 <html><head>
 <title>Go {{title}}</title>
+<link rel="icon" type="image/vnd.microsoft.icon" href="/static/favicon.ico">
 <link type="text/css" rel="stylesheet" href="/static/main.css" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head><body>
