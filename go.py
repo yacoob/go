@@ -7,7 +7,7 @@ import bottle;
 
 @bottle.route('/')
 def index():
-    bottle.redirect('/and/add');
+    bottle.redirect('/and/list');
 
 
 @bottle.route('/(?P<shortcut>[^&?/*]+)\*')
