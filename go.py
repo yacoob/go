@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import getopt, shelve, sys, time, urllib;
+import optparse, shelve, sys, time, urllib;
 import bottle;
 
 
@@ -160,34 +160,36 @@ def static_file(filename):
 
 
 def init(app):
-    # set default config values
-    app.update({
-        'debug':    False,
-        'host':     'localhost',
-        'port':     8080,
-        'db_dir':   '/tmp/',
-    });
-
     # parse command line
     # FIXME: add option to disable trampoline
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'Dd:h:p:');
-    except getopt.GetoptError, err:
-        print str(err);
-        sys.exit(2);
+    parser = optparse.OptionParser();
+    option_list = [
+        optparse.make_option(
+            '-D', '--debug',
+            action='store_false', dest='debug',
+            help='enable debug mode [off]',
+        ),
+        optparse.make_option(
+            '-d', '--db-dir',
+            dest='db_dir', help='directory for dbs [/tmp]',
+        ),
+        optparse.make_option(
+            '-H', '--host',
+            dest='host', help='hostname to bind on [localhost]',
+        ),
+        optparse.make_option(
+            '-p', '--port', type="int",
+            dest='port', help='port to bind to [8080]',
+        ),
+    ];
+    parser.add_options(option_list);
+    parser.set_defaults(
+        debug=False, db_dir='/tmp/',
+        host='localhost', port=8080,
+    );
 
-    # set options
-    for o, a in opts:
-        if o == '-D':
-            app['debug'] = True;
-        elif o == '-d':
-            app['db_dir'] = a;
-        elif o == '-h':
-            app['host'] = a;
-        elif o == '-p':
-            app['port'] = a;
-        else:
-            assert False, 'unhandled command line option';
+    (options, args) = parser.parse_args();
+    app.update(vars(options));
 
     # open dbs
     app['shortcuts_db'] = shelve.open(
