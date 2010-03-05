@@ -1,0 +1,57 @@
+body {
+    font: 12px Helvetica;
+    background: #3D8ABA;
+    height: 160px;
+    /*border: 1px solid red;*/
+}
+
+div.trampolina-msg {
+    background: #F8F8FF;
+    border: 1px solid #DEDEDE;
+    color: black;
+    display: none;
+}
+
+a, a:visited, a:link {
+  text-decoration: none;
+  color: black;
+}
+
+a:hover {
+  color: orange;
+}
+
+a.trampolina-button, a.trampolina-button:visited, a.trampolina-buttom:link {
+    color: white;
+    background: black;
+    margin: 7px 7px;
+    padding: 3px 4px;
+    width: 60px;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    border: none;
+}
+
+a.trampolina-button:hover {
+    background: orange;
+    color: black;
+}
+
+a.trampolina-button.trampolina-clicked {
+    background: red;
+    font-weight: bold;
+}
+
+div.trampolina-list {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /*border: 1px green solid;*/
+}
+
+ul.trampolina-items, ul.trampolina-items li {
+  list-style: none;
+  padding: 0px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,78 @@
+<html>
+<head><title>Trampolina options page</title>
+
+<link rel="stylesheet" type="text/css" href="res/common.css">
+<style type="text/css" media="all">
+body {
+    font-size: x-large;
+}
+</style>
+
+<script src="scripts/jquery-1.4.2.min.js"></script>
+<script src="scripts/prefs.js"></script>
+
+<script type="text/javascript">
+function load_options() {
+    // load preferences
+    var prefs = loadPrefs();
+
+    // set form controls accordingly
+    $('input#base-url').val(prefs.base_url);
+    $('input#poll-interval').val(prefs.poll_interval);
+
+    // load "hide preferences"
+    for (var i = 0; i < __hide_prefs.length; i += 1) {
+        var n = __hide_prefs[i];
+        var checkbox = $('input#' + n);
+
+        // tick checkboxes
+        if (prefs[n]) {
+            checkbox.attr('checked', 'checked');
+        } else {
+            checkbox.attr('checked', '');
+        };
+    };
+};
+
+function save_options() {
+    // start with an empty object
+    var prefs = {};
+
+    prefs.base_url = $('input#base-url').val();
+    prefs.poll_interval = $('input#poll-interval').val();
+
+    // save "hide preferences"
+    for (var i = 0; i < __hide_prefs.length; i += 1) {
+        var n = __hide_prefs[i];
+        prefs[n] = $('input#' + n).attr('checked');
+    };
+    savePrefs(prefs);
+
+    // inform user that his changes have been saved
+    var status = $('div#status');
+    status.html('Settings have been saved.').toggle('fast');
+    setTimeout(function() {
+        status.toggle('fast');
+    }, 3000);
+
+    // inform everyone that we've just possibly saved prefs
+    chrome.extension.sendRequest({msg: 'reloadPrefs'});
+};
+</script>
+</head>
+
+
+<body onload="load_options()">
+Trampolina base url:<br>
+<input id="base-url" type="text" size="75"><br>
+Update frequency (in seconds, 600 by default):<br>
+<input id="poll-interval" type="text" size="25"><br>
+&nbsp;<br>
+<input id="hide_push" type="checkbox">Hide popup after push?<br>
+<input id="hide_pop"  type="checkbox">Hide popup after pop?<br>
+<input id="hide_list" type="checkbox">Hide popup after pop from list?<br>
+<hr>
+<input type="submit" value="Save" onclick="save_options()"><br>
+<div class="trampolina-msg" id="status"></div>
+</body>
+</html>

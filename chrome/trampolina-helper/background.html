@@ -1,0 +1,109 @@
+<html>
+<head><title>Trampolina background page</title>
+
+<link rel="stylesheet" type="text/css" href="res/common.css">
+
+<script src="scripts/jquery-1.4.2.min.js"></script>
+<script src="scripts/jquery.jfeed.pack.js"></script>
+<script src="scripts/prefs.js"></script>
+
+<script type="text/javascript">
+// maximum number of URLs to show in the popup
+var __max_items = 6;
+
+// preferences object
+var prefs = {};
+
+// timer object
+var t;
+
+
+// force refresh
+function poke() {
+    stopUpdates();
+    t = window.setTimeout(refresh, 500);
+};
+
+
+// stop updates
+function stopUpdates() {
+    window.clearTimeout(t);
+};
+
+
+// update the badge on browser action
+function updateBadge(num) {
+    if (num) {
+        chrome.browserAction.setBadgeText({text: num + ''});
+    } else {
+        chrome.browserAction.setBadgeText({text: ''});
+    };
+};
+
+
+// refresh RSS
+function refresh(callback) {
+    // get new feed
+    jQuery.getFeed({
+        url: prefs.base_url + '/rss',
+        success: function (feed) {
+            var list = '<ul class="trampolina-items">';
+            for(var i = 0; i < feed.items.length && i < __max_items; i++) {
+                var item = feed.items[i];
+                list += '<li><a href="' + item.link + '">' + item.title + '</a></li>';
+            };
+            list += '</ul>';
+
+            // update the list
+            $('div#url-list').html(list);
+
+            // update the badge
+            updateBadge(feed.items.length);
+
+            // tell popup to update its list
+            console.debug('background.html: sending updateList');
+            chrome.extension.sendRequest({msg: 'updateList', chunk: list});
+        }
+    });
+
+    // schedule next run
+    t = window.setTimeout(refresh, prefs.poll_interval * 1000);
+};
+
+
+// set up infrastructure, start the refresh cycle
+function init() {
+    // load options
+    prefs = loadPrefs();
+
+    // add listener
+    chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+        switch(request.msg) {
+            //case 'getList':
+            //    // send current list of URLs as a response
+            //    var response = $('div#url-list').html();
+            //    console.debug('background.html: getList received, sending current list');
+            //    sendResponse({chunk: response});
+            //    break;
+            case 'refreshList':
+                console.debug('background.html: refreshList received, requerying list from RSS');
+                poke()
+                break;
+            case 'reloadPrefs':
+                console.debug('background.html: reloadPrefs received, reloading my prefences');
+                prefs =loadPrefs();
+                console.debug('background.html: sending refreshList');
+                chrome.extension.sendRequest({msg: 'refreshList'});
+        };
+    });
+
+    // start refresh cycle
+    refresh();
+};
+</script>
+</head>
+
+<body onload="init()">
+<div id="url-list"></div>
+</body>
+</html>
