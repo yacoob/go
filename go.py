@@ -116,6 +116,7 @@ def hop_command(cmd):
 
     elif (cmd == 'pop'):
         urls_keys = db.keys();
+        # FIXME: change this to use timestamps, instead of IDs
         id = int(args['id'] if args['id'] else len(urls_keys)) - 1;
         if ((id<0) or (id>len(urls_keys)-1)):
             bottle.redirect('/hop/list');
@@ -143,7 +144,19 @@ def hop_command(cmd):
         return bottle.template('hop_list', **args);
 
     elif (cmd == 'rss'):
-        pass
+        urls = db.items();
+        urls.sort(reverse=True);
+        describe = lambda item: { 'url': item[1], 'timestamp': item[0], 'datetime': time.ctime(item[0]) };
+        stack = map(describe, urls);
+        args = {
+           'stack': stack,
+           'title': '- new trampolina URLs',
+           'description': 'New URLs in trampolina',
+           'timestamp': time.ctime(),
+           'list_url': 'http://localhost:9099/and/list', #FIXME need to use proper bottle.request.umm.whatchacallit :)
+           'pop_url': 'http://localhost:9099/and/pop?id=',
+        };
+        return bottle.template('hop_rss', **args);
 
     else:
         # default endpoint
