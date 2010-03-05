@@ -46,6 +46,7 @@ class BasicUsageTestCase(SqlDictTest):
         index_two = { 1: 2, 3: 4 };
         self.assertEquals(index_one is index_two, False);
         self.assertEquals(index_one, index_two);
+        # test whether using equal keys sets the same entry in sqldict
         b[index_one] = 42;
         self.assertEquals(b[index_one], b[index_two]);
         b[index_two] = 23;
