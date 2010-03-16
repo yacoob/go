@@ -116,18 +116,17 @@ def hop_command(cmd):
 
     elif (cmd == 'pop'):
         urls_keys = db.keys();
-        # FIXME: change this to use timestamps, instead of IDs
-        id = int(args['id'] if args['id'] else len(urls_keys)) - 1;
-        if ((id<0) or (id>len(urls_keys)-1)):
-            bottle.redirect('/hop/list');
         urls_keys.sort();
-        t = urls_keys[id];
+        latest_id = urls_keys[-1] if len(urls_keys) else 0;
+        id = args['id'] if args['id'] else latest_id;
+        if (id not in urls_keys):
+            bottle.redirect('/hop/list');
 
-        url = db[t];
-        del db[t];
+        url = db[id];
+        del db[id];
 
         # FIXME: purge old urls from db_old
-        db_old[t] = url;
+        db_old[id] = url;
 
         bottle.redirect(url);
 
@@ -146,16 +145,22 @@ def hop_command(cmd):
     elif (cmd == 'rss'):
         urls = db.items();
         urls.sort(reverse=True);
-        describe = lambda item: { 'url': item[1], 'timestamp': item[0], 'datetime': time.ctime(item[0]) };
+        describe = lambda item: {
+            'url': item[1],
+            'timestamp': item[0],
+            'datetime': time.ctime(float(item[0])),
+        };
+        base_url = 'http://' + app['host'] + ':' + str(app['port']);
         stack = map(describe, urls);
         args = {
            'stack': stack,
            'title': '- new trampolina URLs',
            'description': 'New URLs in trampolina',
            'timestamp': time.ctime(),
-           'list_url': 'http://localhost:9099/and/list', #FIXME need to use proper bottle.request.umm.whatchacallit :)
-           'pop_url': 'http://localhost:9099/and/pop?id=',
+           'list_url': base_url + '/hop/list',
+           'pop_url': base_url + '/hop/pop?id=',
         };
+        bottle.response.content_type = 'text/xml';
         return bottle.template('hop_rss', **args);
 
     else:

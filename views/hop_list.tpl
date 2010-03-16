@@ -8,13 +8,11 @@
 </head><body>
 % include header
 <h1>New URLs:</h1>
-<ol>
-% i = len(stack)
+<ul>
 % for row in stack:
-<li value="{{i}}"><a href="/hop/pop?id={{++i}}">{{row[1]}}</a></li>
-% i = i - 1
+<li><a href="/hop/pop?id={{row[0]}}">{{row[1]}}</a></li>
 % end
-</ol>
+</ul>
 <hr>
 <h1>Old URLs:</h1>
 <ul>
