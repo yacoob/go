@@ -19,7 +19,7 @@ def go_edit_that(shortcut):
 
 @bottle.route('/(?P<shortcut>[^&?/*]+)')
 def go_there(shortcut):
-    db = app['shortcuts_db'];
+    db = app['shortcuts.db'];
 
     if (db.has_key(shortcut)):
         # if redirect already exist, just go there
@@ -36,7 +36,7 @@ def go_command(cmd):
     # FIXME: sanitize the params here
     args['short'] = bottle.request.GET.get('short', '');
     args['long'] = bottle.request.GET.get('long', '');
-    db = app['shortcuts_db'];
+    db = app['shortcuts.db'];
 
     if (cmd == 'add'):
         # add new redirect
@@ -102,8 +102,8 @@ def hop_command(cmd):
     # FIXME: sanitize the params here
     args['url'] = bottle.request.GET.get('url', '');
     args['id'] = bottle.request.GET.get('id', '');
-    db = app['trampolina_db'];
-    db_old = app['trampolina_old_db'];
+    db = app['trampolina.db'];
+    db_old = app['trampolina_old.db'];
 
     if (cmd == 'push'):
         if (args['url']):
@@ -166,7 +166,7 @@ def init(app):
     option_list = [
         optparse.make_option(
             '-D', '--debug',
-            action='store_false', dest='debug',
+            action='store_true', dest='debug',
             help='enable debug mode [off]',
         ),
         optparse.make_option(
@@ -184,7 +184,7 @@ def init(app):
     ];
     parser.add_options(option_list);
     parser.set_defaults(
-        debug=False, db_dir='/tmp/',
+        debug=False, db_dir='/tmp',
         host='localhost', port=8080,
     );
 
@@ -192,23 +192,16 @@ def init(app):
     app.update(vars(options));
 
     # open dbs
-    app['shortcuts_db'] = shelve.open(
-        app['db_dir'] + 'shortcuts', writeback=True
-    );
-    app['trampolina_db'] = shelve.open(
-        app['db_dir'] + 'trampolina', writeback=True
-    );
-    app['trampolina_old_db'] = shelve.open(
-        app['db_dir'] + 'trampolina-old', writeback=True
-    );
+    for name_of_db in ('shortcuts.db', 'trampolina.db', 'trampolina_old.db'):
+        app[name_of_db] = shelve.open(app['db_dir'] + '/' + name_of_db, writeback=True);
 
 
 def run(app):
-    debug, host, port = app['debug'], app['host'], app['port'];
+    debugmode, host, port = app['debug'], app['host'], app['port'];
 
     # run bottle
-    bottle.debug(debug);
-    bottle.run(host=host, port=port, reloader=debug);
+    bottle.debug(debugmode);
+    bottle.run(host=host, port=port, reloader=debugmode);
 
 
 if (__name__ == '__main__'):
