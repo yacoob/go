@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import optparse, shelve, sys, time, urllib;
+import optparse, sys, time, urllib;
 import bottle;
+
+import sqldict;
 
 
 @bottle.route('/')
@@ -45,7 +47,6 @@ def go_command(cmd):
         if args['short'] and args['long']:
             # if both short and long name are provided, add it straight away
             db[args['short']] = args['long'];
-            db.sync();
             bottle.redirect('/and/list');
         else:
             # otherwise, present user with edit form
@@ -75,7 +76,6 @@ def go_command(cmd):
             args['long'] = db[args['short']];
             args['title'] = '- last chance to save a shortcut!';
             del db[args['short']];
-            db.sync();
             return bottle.template('go_edit', **args);
         else:
             url = '/and/add?' + urllib.urlencode({'short': args['short']});
@@ -109,7 +109,6 @@ def hop_command(cmd):
         if (args['url']):
             # ZOMG race condition! 8)
             db[str(time.time())] = args['url'];
-            db.sync();
             args['title'] = '- trampolina push succeeded';
             return bottle.template('hop_msg', **args);
         else:
@@ -125,11 +124,9 @@ def hop_command(cmd):
 
         url = db[t];
         del db[t];
-        db.sync();
 
         # FIXME: purge old urls from db_old
         db_old[t] = url;
-        db_old.sync();
 
         bottle.redirect(url);
 
@@ -193,7 +190,7 @@ def init(app):
 
     # open dbs
     for name_of_db in ('shortcuts.db', 'trampolina.db', 'trampolina_old.db'):
-        app[name_of_db] = shelve.open(app['db_dir'] + '/' + name_of_db, writeback=True);
+        app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db);
 
 
 def run(app):
