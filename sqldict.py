@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import hashlib, os, sqlite3;
+import hashlib, os, sqlite3, threading;
 import cPickle as pickle;
 import UserDict;
 
@@ -10,8 +10,9 @@ class sqldict(UserDict.DictMixin):
     def __init__(self, table=None, filename=None):
         if (not filename):
             filename = os.tmpnam();
-        self.db = sqlite3.connect(filename);
+        self.db = sqlite3.connect(filename, check_same_thread=False);
         self.filename = filename;
+        self.lock = threading.RLock();
 
         if (not table):
             table = 'dict';
@@ -63,6 +64,7 @@ class sqldict(UserDict.DictMixin):
             { 'key': table_key, 'tablename': self.table }
         );
         rows = cursor.fetchall();
+        self.lock.acquire();
         if len(rows) == 0:
             cursor = self.__execute(
                 'insert into %(tablename)s (key, key_orig, value) '
@@ -87,10 +89,12 @@ class sqldict(UserDict.DictMixin):
         else:
             raise RuntimeError;
         self.db.commit();
+        self.lock.release();
 
 
     def __delitem__(self, key):
         table_key = __hash_key(key);
+        self.lock.acquire();
         cursor = self.__execute(
             'delete from %(tablename)s where key = "%(key)s";' %
             {
@@ -99,6 +103,7 @@ class sqldict(UserDict.DictMixin):
             },
         );
         self.db.commit();
+        self.lock.release();
 
 
     def keys(self):
