@@ -219,7 +219,11 @@ def run(app):
     bottle.run(host=host, port=port, reloader=debugmode);
 
 
-if (__name__ == '__main__'):
-    app = {};
+def go():
     init(app);
     run(app);
+
+app = {};
+
+if (__name__ == '__main__'):
+    go();
