@@ -13,6 +13,6 @@ setup(name='go',
       #py_modules=['sqldict'],
       packages=['go'],
       scripts=['go-runner.py'],
-      data_files=[('go/static', ['static/favicon.ico', 'static/main.css']),
-                  ('go/views', glob('views/*.tpl'))],
+      data_files=[('share/go/static', ['static/favicon.ico', 'static/main.css']),
+                  ('share/go/views', glob('views/*.tpl'))],
      );
