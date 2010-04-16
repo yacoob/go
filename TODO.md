@@ -2,6 +2,5 @@
 
 * address all FIXMEs in the code;
 * more testing for trampolina part;
-* solve the horrible race condition :)
 * sanitization & validation of url parameters;
 * perhaps a form for /hop/push?

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import optparse, sys, time, urllib;
+import optparse, sys, threading, time, urllib;
 import bottle;
 
 import sqldict;
@@ -107,8 +107,9 @@ def hop_command(cmd):
 
     if (cmd == 'push'):
         if (args['url']):
-            # ZOMG race condition! 8)
+            app['timestamp_lock'].acquire();
             db[str(time.time())] = args['url'];
+            app['timestamp_lock'].release();
             args['title'] = '- trampolina push succeeded';
             return bottle.template('hop_msg', **args);
         else:
@@ -170,7 +171,6 @@ def hop_command(cmd):
 
 @bottle.route('/static/:filename')
 def static_file(filename):
-    # FIXME: use proper root path here
     bottle.send_file(filename, root=app['data_dir'] + '/static/');
 
 
@@ -215,6 +215,7 @@ def init(app):
         app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db);
 
     bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ];
+    app['timestamp_lock'] = threading.Lock();
 
 
 def run(app):
