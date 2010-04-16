@@ -30,6 +30,12 @@ In short, it's a LIFO stack of URLs, that
 you can use in order to bounce an URL from one computer to the other. You push
 to stack from the first one, and you pop from the stack on the other one.
 
-* `/hop/list` - current stack content;
+* `/hop/list` - current stack content ("New URLs") and recently exchanged URLs ("Old URLs");
 * `/hop/pop` - go to last pushed URL;
 * `/hop/push` - push a new URL (via `?url=...` parameter).
+* `/hop/rss` - feed of new URLs
+
+`chrome` directory contains simple Chrome addon, that allows you to
+push/pop/interact with Trampolina part of go without fiddling with URLs on your
+own. Remember to configure it properly before using. For the time being, it's
+not available in Chrome Extension Gallery, and you have to install it by hand.
