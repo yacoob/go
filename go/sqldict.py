@@ -93,7 +93,7 @@ class sqldict(UserDict.DictMixin):
 
 
     def __delitem__(self, key):
-        table_key = __hash_key(key);
+        table_key = self.__hash_key(key);
         self.lock.acquire();
         cursor = self.__execute(
             'delete from %(tablename)s where key = "%(key)s";' %
