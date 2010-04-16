@@ -171,7 +171,7 @@ def hop_command(cmd):
 @bottle.route('/static/:filename')
 def static_file(filename):
     # FIXME: use proper root path here
-    bottle.send_file(filename, root='./static/');
+    bottle.send_file(filename, root=app['data_dir'] + '/static/');
 
 
 def init(app):
@@ -189,6 +189,10 @@ def init(app):
             dest='db_dir', help='directory for dbs [/tmp]',
         ),
         optparse.make_option(
+            '-a', '--data-dir',
+            dest='data_dir', help='prefix for data directories [/usr/share/go]',
+        ),
+        optparse.make_option(
             '-H', '--host',
             dest='host', help='hostname to bind on [localhost]',
         ),
@@ -199,7 +203,7 @@ def init(app):
     ];
     parser.add_options(option_list);
     parser.set_defaults(
-        debug=False, db_dir='/tmp',
+        debug=False, db_dir='/tmp', data_dir='/usr/share/go',
         host='localhost', port=8080,
     );
 
@@ -209,6 +213,8 @@ def init(app):
     # open dbs
     for name_of_db in ('shortcuts.db', 'trampolina.db', 'trampolina_old.db'):
         app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db);
+
+    bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ];
 
 
 def run(app):
