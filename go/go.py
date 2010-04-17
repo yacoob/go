@@ -95,7 +95,7 @@ def init(app):
     app.update(vars(options));
 
     # open dbs
-    for name_of_db in ('shortcuts.db', 'trampolina.db', 'trampolina_old.db'):
+    for name_of_db in ('and.db', 'hop.db', 'hop_old.db'):
         app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db);
 
     bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ];

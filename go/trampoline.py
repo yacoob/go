@@ -7,15 +7,15 @@ import threading, time, urllib;
 def handle_command(app, cmd, params):
     args = {};
     args.update(params);
-    db = app['trampolina.db'];
-    db_old = app['trampolina_old.db'];
+    db = app['hop.db'];
+    db_old = app['hop_old.db'];
 
     if (cmd == 'push'):
         if (args['url']):
             app['timestamp_lock'].acquire();
             db[str(time.time())] = args['url'];
             app['timestamp_lock'].release();
-            args['title'] = '- trampolina push succeeded';
+            args['title'] = '- trampoline push succeeded';
             return { 'action': 'template', 'template_name': 'hop_msg',
                      'template_args': args };
         else:
@@ -45,7 +45,7 @@ def handle_command(app, cmd, params):
         args = {
             'stack':  urls,
             'viewed': old_urls,
-            'title':  '- trampolina URLs list',
+            'title':  '- trampoline URLs list',
         };
         return { 'action': 'template', 'template_name': 'hop_list',
                  'template_args': args };
@@ -62,8 +62,8 @@ def handle_command(app, cmd, params):
         stack = map(describe, urls);
         args = {
            'stack': stack,
-           'title': '- new trampolina URLs',
-           'description': 'New URLs in trampolina',
+           'title': '- new trampoline URLs',
+           'description': 'New URLs on trampoline',
            'timestamp': time.ctime(),
            'list_url': base_url + '/hop/list',
            'pop_url': base_url + '/hop/pop?id=',

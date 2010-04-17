@@ -5,7 +5,7 @@ import urllib;
 
 
 def handle_shortcut(app, shortcut):
-    db = app['shortcuts.db'];
+    db = app['and.db'];
     if (db.has_key(shortcut)):
         # if redirect already exist, just go there
         url = db[shortcut];
@@ -18,7 +18,7 @@ def handle_shortcut(app, shortcut):
 def handle_command(app, cmd, params):
     args = {};
     args.update(params);
-    db = app['shortcuts.db'];
+    db = app['and.db'];
 
     if (cmd == 'add'):
         # add new redirect
