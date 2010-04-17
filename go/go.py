@@ -58,7 +58,6 @@ def static_file(filename):
 
 def init(app):
     # parse command line
-    # FIXME: add option to disable trampoline
     parser = optparse.OptionParser();
     option_list = [
         optparse.make_option(
