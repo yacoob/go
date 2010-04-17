@@ -2,23 +2,23 @@
 # coding: utf-8
 
 import urllib;
-import bottle;
 
 
-def handle_shortcut(db, shortcut):
+def handle_shortcut(app, shortcut):
+    db = app['shortcuts.db'];
     if (db.has_key(shortcut)):
         # if redirect already exist, just go there
-        bottle.redirect(db[shortcut]);
+        url = db[shortcut];
     else:
         # if it doesn't, redirect to prefilled edit form
         url = '/and/add?' + urllib.urlencode({'short': shortcut});
-        bottle.redirect(url);
+    return { 'action': 'redir', 'url': url };
 
-def handle_command(db, cmd):
+
+def handle_command(app, cmd, params):
     args = {};
-    # FIXME: sanitize the params here
-    args['short'] = bottle.request.GET.get('short', '');
-    args['long'] = bottle.request.GET.get('long', '');
+    args.update(params);
+    db = app['shortcuts.db'];
 
     if (cmd == 'add'):
         # add new redirect
@@ -27,10 +27,11 @@ def handle_command(db, cmd):
         if args['short'] and args['long']:
             # if both short and long name are provided, add it straight away
             db[args['short']] = args['long'];
-            bottle.redirect('/and/list');
+            return { 'action': 'redir', 'url': '/and/list' };
         else:
             # otherwise, present user with edit form
-            return bottle.template('go_edit', **args);
+            return { 'action': 'template', 'template_name': 'go_edit',
+                     'template_args': args };
 
     elif (cmd == 'edit'):
         if args['short']:
@@ -42,10 +43,11 @@ def handle_command(db, cmd):
             else:
                 args['message'] = 'Add a new shortcut:';
                 args['title'] = '- add a new shortcut';
-            return bottle.template('go_edit', **args);
+            return { 'action': 'template', 'template_name': 'go_edit',
+                     'template_args': args };
         else:
             # redirect to / if no name was supplied
-            bottle.redirect('/and/list');
+            return { 'action': 'redir', 'url': '/and/list' };
 
     elif (cmd == 'del'):
         # delete a redirect
@@ -56,10 +58,11 @@ def handle_command(db, cmd):
             args['long'] = db[args['short']];
             args['title'] = '- last chance to save a shortcut!';
             del db[args['short']];
-            return bottle.template('go_edit', **args);
+            return { 'action': 'template', 'template_name': 'go_edit',
+                     'template_args': args };
         else:
             url = '/and/add?' + urllib.urlencode({'short': args['short']});
-            bottle.redirect(url);
+            return { 'action': 'redir', 'url': url };
 
     elif (cmd == 'list'):
         # show list of all redirects
@@ -69,9 +72,9 @@ def handle_command(db, cmd):
           'list':  shortcuts,
           'title': '- shortcuts list',
         };
-        return bottle.template('go_list', **args);
+        return { 'action': 'template', 'template_name': 'go_list',
+                 'template_args': args };
 
     else:
         # default endpoint
-        bottle.redirect('/and/list');
-
+        return { 'action': 'redir', 'url': '/and/list' };

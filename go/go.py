@@ -9,6 +9,17 @@ import sqldict;
 import trampoline;
 
 
+def handle_response(r):
+    if not r.has_key('action'):
+        raise bottle.HTTPError;
+    w = r['action'];
+    if (w == 'redir'):
+        return bottle.redirect(r['url']);
+    elif (w == 'template'):
+        bottle.response.content_type = r['content_type'] if r.has_key('content_type') else 'text/html';
+        return bottle.template(r['template_name'], **r['template_args']);
+
+
 @bottle.route('/')
 def index():
     bottle.redirect('/and/list');
@@ -23,19 +34,23 @@ def go_edit_that(shortcut):
 
 @bottle.route('/(?P<shortcut>[^&?/*]+)')
 def go_there(shortcut):
-    return redirector.handle_shortcut(app['shortcuts.db'], shortcut);
+    return handle_response(redirector.handle_shortcut(app, shortcut));
 
 
 @bottle.route('/and/(?P<cmd>.*)')
 def go_command(cmd):
-    return redirector.handle_command(app['shortcuts.db'], cmd);
+    params = {};
+    params['short'] = bottle.request.GET.get('short', '');
+    params['long'] = bottle.request.GET.get('long', '');
+    return handle_response(redirector.handle_command(app, cmd, params));
 
 
 @bottle.route('/hop/(?P<cmd>.*)')
 def hop_command(cmd):
-    return trampoline.handle_command(
-        app['trampolina.db'], app['trampolina_old.db'], cmd, app['timestamp_lock']
-    );
+    params = {};
+    params['url'] = bottle.request.GET.get('url', '');
+    params['id'] = bottle.request.GET.get('id', '');
+    return handle_response(trampoline.handle_command(app, cmd, params));
 
 
 @bottle.route('/static/:filename')

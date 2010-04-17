@@ -2,23 +2,24 @@
 # coding: utf-8
 
 import threading, time, urllib;
-import bottle;
 
-def handle_command(db, db_old, cmd, timestamp_lock):
+
+def handle_command(app, cmd, params):
     args = {};
-    # FIXME: sanitize the params here
-    args['url'] = bottle.request.GET.get('url', '');
-    args['id'] = bottle.request.GET.get('id', '');
+    args.update(params);
+    db = app['trampolina.db'];
+    db_old = app['trampolina_old.db'];
 
     if (cmd == 'push'):
         if (args['url']):
-            timestamp_lock.acquire();
+            app['timestamp_lock'].acquire();
             db[str(time.time())] = args['url'];
-            timestamp_lock.release();
+            app['timestamp_lock'].release();
             args['title'] = '- trampolina push succeeded';
-            return bottle.template('hop_msg', **args);
+            return { 'action': 'template', 'template_name': 'hop_msg',
+                     'template_args': args };
         else:
-            bottle.redirect('/hop/list');
+            return { 'action': 'redir', 'url': '/hop/list' };
 
     elif (cmd == 'pop'):
         urls_keys = db.keys();
@@ -26,7 +27,7 @@ def handle_command(db, db_old, cmd, timestamp_lock):
         latest_id = urls_keys[-1] if len(urls_keys) else 0;
         id = args['id'] if args['id'] else latest_id;
         if (id not in urls_keys):
-            bottle.redirect('/hop/list');
+            return { 'action': 'redir', 'url': '/hop/list' };
 
         url = db[id];
         del db[id];
@@ -34,7 +35,7 @@ def handle_command(db, db_old, cmd, timestamp_lock):
         # FIXME: purge old urls from db_old
         db_old[id] = url;
 
-        bottle.redirect(url);
+        return { 'action': 'redir', 'url': url };
 
     elif (cmd == 'list'):
         urls = db.items();
@@ -46,7 +47,8 @@ def handle_command(db, db_old, cmd, timestamp_lock):
             'viewed': old_urls,
             'title':  '- trampolina URLs list',
         };
-        return bottle.template('hop_list', **args);
+        return { 'action': 'template', 'template_name': 'hop_list',
+                 'template_args': args };
 
     elif (cmd == 'rss'):
         urls = db.items();
@@ -66,9 +68,9 @@ def handle_command(db, db_old, cmd, timestamp_lock):
            'list_url': base_url + '/hop/list',
            'pop_url': base_url + '/hop/pop?id=',
         };
-        bottle.response.content_type = 'text/xml';
-        return bottle.template('hop_rss', **args);
+        return { 'action': 'template', 'template_name': 'hop_rss',
+                 'template_args': args, 'content_type': 'text/xml' };
 
     else:
         # default endpoint
-        bottle.redirect('/hop/list');
+        return { 'action': 'redir', 'url': '/hop/list' };
