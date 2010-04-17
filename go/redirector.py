@@ -16,7 +16,7 @@ def handle_shortcut(app, shortcut):
 
 
 def handle_command(app, cmd, params):
-    args = {};
+    args = { 'short': '', 'long': '' };
     args.update(params);
     db = app['and.db'];
 
@@ -47,7 +47,7 @@ def handle_command(app, cmd, params):
                      'template_args': args };
         else:
             # redirect to / if no name was supplied
-            return { 'action': 'redir', 'url': '/and/list' };
+            return { 'action': 'redir', 'url': '/and/add' };
 
     elif (cmd == 'del'):
         # delete a redirect
