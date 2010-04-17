@@ -39,17 +39,15 @@ def go_there(shortcut):
 
 @bottle.route('/and/(?P<cmd>.*)')
 def go_command(cmd):
-    params = {};
-    params['short'] = bottle.request.GET.get('short', '');
-    params['long'] = bottle.request.GET.get('long', '');
+    params = { 'short': bottle.request.GET.get('short', ''),
+               'long':  bottle.request.GET.get('long', '') };
     return handle_response(redirector.handle_command(app, cmd, params));
 
 
 @bottle.route('/hop/(?P<cmd>.*)')
 def hop_command(cmd):
-    params = {};
-    params['url'] = bottle.request.GET.get('url', '');
-    params['id'] = bottle.request.GET.get('id', '');
+    params = { 'url': bottle.request.GET.get('url', ''),
+               'id':  bottle.request.GET.get('id', '') };
     return handle_response(trampoline.handle_command(app, cmd, params));
 
 

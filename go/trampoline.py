@@ -11,7 +11,7 @@ def handle_command(app, cmd, params):
     db_old = app['hop_old.db'];
 
     if (cmd == 'push'):
-        if (args['url']):
+        if (args.has_key('url') and args['url']):
             app['timestamp_lock'].acquire();
             db[str(time.time())] = args['url'];
             app['timestamp_lock'].release();
@@ -25,7 +25,7 @@ def handle_command(app, cmd, params):
         urls_keys = db.keys();
         urls_keys.sort();
         latest_id = urls_keys[-1] if len(urls_keys) else 0;
-        id = args['id'] if args['id'] else latest_id;
+        id = args['id'] if (args.has_key('id') and args['id']) else latest_id;
         if (id not in urls_keys):
             return { 'action': 'redir', 'url': '/hop/list' };
 

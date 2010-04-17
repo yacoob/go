@@ -7,8 +7,7 @@ import redirector;
 
 class RedirectorTest(unittest.TestCase):
     def setUp(self):
-        self.app = {};
-        self.app['and.db'] = {};
+        self.app = { 'and.db': {} };
 
     def tearDown(self):
         del self.app;
