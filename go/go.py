@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import optparse, sys, threading, time, urllib;
+import optparse, threading, urllib;
 import bottle;
 
 import redirector;

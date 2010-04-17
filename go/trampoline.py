@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import threading, time, urllib;
+import time;
 
 
 def handle_command(app, cmd, params):
