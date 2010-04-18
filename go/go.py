@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import optparse, threading, urllib;
+import optparse, os, sys, threading, urllib;
 import bottle;
 
 import redirector;
@@ -99,11 +99,42 @@ def init(app):
     app['timestamp_lock'] = threading.Lock();
 
 
+def fork():
+    try:
+        pid = os.fork();
+        if pid > 0:
+            sys.exit(0);
+    except OSError, e:
+        print >>sys.stderr, "Oh dear, failed to fork: %s (%s)" % (e.errno, e.strerror);
+        sys.exit(1);
+
+def daemonize():
+    # fork once, to create own session
+    fork();
+
+    # start new session
+    os.setsid();
+
+    # make sure we won't get a controlling terminal, ever
+    fork();
+    os.chdir('/');
+    os.umask(0);
+
+    fd = os.open(os.devnull, os.O_RDWR);
+    os.dup2(fd, 0);
+    os.dup2(fd, 1);
+    os.dup2(fd, 2);
+    os.close(fd);
+
+
 def run(app):
     debugmode, host, port = app['debug'], app['host'], app['port'];
 
     # run bottle
-    bottle.debug(debugmode);
+    if debugmode:
+        bottle.debug(debugmode);
+    else:
+        daemonize();
     bottle.run(host=host, port=port, reloader=debugmode);
 
 
