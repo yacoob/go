@@ -1,10 +1,23 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import optparse, sys, time, urllib;
+import optparse, os, sys, threading, urllib;
 import bottle;
 
+import redirector;
 import sqldict;
+import trampoline;
+
+
+def handle_response(r):
+    if not r.has_key('action'):
+        raise bottle.HTTPError;
+    w = r['action'];
+    if (w == 'redir'):
+        return bottle.redirect(r['url']);
+    elif (w == 'template'):
+        bottle.response.content_type = r['content_type'] if r.has_key('content_type') else 'text/html';
+        return bottle.template(r['template_name'], **r['template_args']);
 
 
 @bottle.route('/')
@@ -21,162 +34,30 @@ def go_edit_that(shortcut):
 
 @bottle.route('/(?P<shortcut>[^&?/*]+)')
 def go_there(shortcut):
-    db = app['shortcuts.db'];
-
-    if (db.has_key(shortcut)):
-        # if redirect already exist, just go there
-        bottle.redirect(db[shortcut]);
-    else:
-        # if it doesn't, redirect to prefilled edit form
-        url = '/and/add?' + urllib.urlencode({'short': shortcut});
-        bottle.redirect(url);
+    return handle_response(redirector.handle_shortcut(app, shortcut));
 
 
 @bottle.route('/and/(?P<cmd>.*)')
 def go_command(cmd):
-    args = {};
-    # FIXME: sanitize the params here
-    args['short'] = bottle.request.GET.get('short', '');
-    args['long'] = bottle.request.GET.get('long', '');
-    db = app['shortcuts.db'];
-
-    if (cmd == 'add'):
-        # add new redirect
-        args['message'] = 'Add a new shortcut:';
-        args['title'] = '- add a new shortcut';
-        if args['short'] and args['long']:
-            # if both short and long name are provided, add it straight away
-            db[args['short']] = args['long'];
-            bottle.redirect('/and/list');
-        else:
-            # otherwise, present user with edit form
-            return bottle.template('go_edit', **args);
-
-    elif (cmd == 'edit'):
-        if args['short']:
-            # edit a redirect
-            if db.has_key(args['short']):
-                args['message'] = 'Edit:';
-                args['long'] = db[args['short']];
-                args['title'] = '- edit a shortcut';
-            else:
-                args['message'] = 'Add a new shortcut:';
-                args['title'] = '- add a new shortcut';
-            return bottle.template('go_edit', **args);
-        else:
-            # redirect to / if no name was supplied
-            bottle.redirect('/and/list');
-
-    elif (cmd == 'del'):
-        # delete a redirect
-        if args['short'] and db.has_key(args['short']):
-            # if it exist, remove it and redirect to edit page, as a last
-            # chance to save this shortcut
-            args['message'] = 'Old shortcut removed, but you can always add it back here:';
-            args['long'] = db[args['short']];
-            args['title'] = '- last chance to save a shortcut!';
-            del db[args['short']];
-            return bottle.template('go_edit', **args);
-        else:
-            url = '/and/add?' + urllib.urlencode({'short': args['short']});
-            bottle.redirect(url);
-
-    elif (cmd == 'list'):
-        # show list of all redirects
-        shortcuts = db.items();
-        shortcuts.sort();
-        args = {
-          'list':  shortcuts,
-          'title': '- shortcuts list',
-        };
-        return bottle.template('go_list', **args);
-
-    else:
-        # default endpoint
-        bottle.redirect('/and/list');
+    params = { 'short': bottle.request.GET.get('short', ''),
+               'long':  bottle.request.GET.get('long', '') };
+    return handle_response(redirector.handle_command(app, cmd, params));
 
 
 @bottle.route('/hop/(?P<cmd>.*)')
 def hop_command(cmd):
-    args = {};
-    # FIXME: sanitize the params here
-    args['url'] = bottle.request.GET.get('url', '');
-    args['id'] = bottle.request.GET.get('id', '');
-    db = app['trampolina.db'];
-    db_old = app['trampolina_old.db'];
-
-    if (cmd == 'push'):
-        if (args['url']):
-            # ZOMG race condition! 8)
-            db[str(time.time())] = args['url'];
-            args['title'] = '- trampolina push succeeded';
-            return bottle.template('hop_msg', **args);
-        else:
-            bottle.redirect('/hop/list');
-
-    elif (cmd == 'pop'):
-        urls_keys = db.keys();
-        urls_keys.sort();
-        latest_id = urls_keys[-1] if len(urls_keys) else 0;
-        id = args['id'] if args['id'] else latest_id;
-        if (id not in urls_keys):
-            bottle.redirect('/hop/list');
-
-        url = db[id];
-        del db[id];
-
-        # FIXME: purge old urls from db_old
-        db_old[id] = url;
-
-        bottle.redirect(url);
-
-    elif (cmd == 'list'):
-        urls = db.items();
-        urls.sort(reverse=True);
-        old_urls = db_old.items();
-        old_urls.sort(reverse=True);
-        args = {
-            'stack':  urls,
-            'viewed': old_urls,
-            'title':  '- trampolina URLs list',
-        };
-        return bottle.template('hop_list', **args);
-
-    elif (cmd == 'rss'):
-        urls = db.items();
-        urls.sort(reverse=True);
-        describe = lambda item: {
-            'url': item[1],
-            'timestamp': item[0],
-            'datetime': time.ctime(float(item[0])),
-        };
-        base_url = 'http://' + app['host'] + ':' + str(app['port']);
-        stack = map(describe, urls);
-        args = {
-           'stack': stack,
-           'title': '- new trampolina URLs',
-           'description': 'New URLs in trampolina',
-           'timestamp': time.ctime(),
-           'list_url': base_url + '/hop/list',
-           'pop_url': base_url + '/hop/pop?id=',
-        };
-        bottle.response.content_type = 'text/xml';
-        return bottle.template('hop_rss', **args);
-
-    else:
-        # default endpoint
-        bottle.redirect('/hop/list');
+    params = { 'url': bottle.request.GET.get('url', ''),
+               'id':  bottle.request.GET.get('id', '') };
+    return handle_response(trampoline.handle_command(app, cmd, params));
 
 
 @bottle.route('/static/:filename')
 def static_file(filename):
-    # FIXME: use proper root path here
     bottle.send_file(filename, root=app['data_dir'] + '/static/');
 
 
 def init(app):
     # parse command line
-    # FIXME: add option to disable trampoline
     parser = optparse.OptionParser();
     option_list = [
         optparse.make_option(
@@ -211,17 +92,49 @@ def init(app):
     app.update(vars(options));
 
     # open dbs
-    for name_of_db in ('shortcuts.db', 'trampolina.db', 'trampolina_old.db'):
+    for name_of_db in ('and.db', 'hop.db', 'hop_old.db'):
         app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db);
 
     bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ];
+    app['timestamp_lock'] = threading.Lock();
+
+
+def fork():
+    try:
+        pid = os.fork();
+        if pid > 0:
+            sys.exit(0);
+    except OSError, e:
+        print >>sys.stderr, "Oh dear, failed to fork: %s (%s)" % (e.errno, e.strerror);
+        sys.exit(1);
+
+def daemonize():
+    # fork once, to create own session
+    fork();
+
+    # start new session
+    os.setsid();
+
+    # make sure we won't get a controlling terminal, ever
+    fork();
+    os.chdir('/');
+    os.umask(0);
+
+    fd = os.open(os.devnull, os.O_RDWR);
+    os.dup2(fd, 0);
+    os.dup2(fd, 1);
+    os.dup2(fd, 2);
+    os.close(fd);
 
 
 def run(app):
     debugmode, host, port = app['debug'], app['host'], app['port'];
 
     # run bottle
-    bottle.debug(debugmode);
+    if debugmode:
+        bottle.debug(debugmode);
+    else:
+        daemonize();
     bottle.run(host=host, port=port, reloader=debugmode);
 
 
