@@ -1,0 +1,7 @@
+# Configuration for /etc/init.d/go-runner
+
+GO_USER="daemon"
+GO_DB="/var/lib/go"
+GO_DATA="/usr/share/go"
+GO_PORT="9099"
+GO_HOST=$(hostname)
