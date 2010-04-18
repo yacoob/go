@@ -10,7 +10,8 @@ setup(name='go',
       author_email='yacoob@gmail.com',
       url='http://github.com/yacoob/go',
 
-      #py_modules=['sqldict'],
+      requires=['bottle (>=0.6, <0.7)'],
+
       packages=['go'],
       scripts=['go-runner.py'],
       data_files=[('share/go/static', ['static/favicon.ico', 'static/main.css']),

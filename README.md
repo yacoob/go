@@ -4,7 +4,15 @@
 ## In order to run:
 * get source
 * `easy_install -U bottle`
-* `./go.py`
+* `python setup.py build`
+* `python setup.py install`
+
+It's not on [PyPI](http://pypi.python.org/pypi). Yet :)
+
+Some degree of `sudo` intervention might be required in the above, depending on
+your setup. Remember to also change your `umask` to something sensible (like
+`022`), to avoid having installed files being unreadable to other users on the
+system.
 
 **WARNING:** it doesn't have any kind of ACLs, and it would be probably most
 unwise to set this thing on a publicly available machine. It's a small gizmo
@@ -35,7 +43,12 @@ to stack from the first one, and you pop from the stack on the other one.
 * `/hop/push` - push a new URL (via `?url=...` parameter).
 * `/hop/rss` - feed of new URLs
 
+## Extra bits
 `chrome` directory contains simple Chrome addon, that allows you to
 push/pop/interact with Trampolina part of go without fiddling with URLs on your
 own. Remember to configure it properly before using. For the time being, it's
 not available in Chrome Extension Gallery, and you have to install it by hand.
+
+`init` directory contains an `init.d` script, based on Debian's `skeleton`
+example. If you're installing Go on a Debian-flavoured machine, it might be
+sufficient to say `make`. YMMV, though.
