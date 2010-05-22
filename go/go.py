@@ -145,4 +145,8 @@ def go():
 app = {};
 
 if (__name__ == '__main__'):
-    go();
+    # if called directly, launch in FastCGI wrapper
+    from flup.server.fcgi import WSGIServer
+    init(app);
+    application = bottle.default_app();
+    WSGIServer(application).run();
