@@ -10,7 +10,7 @@ setup(name='go',
       author_email='yacoob@gmail.com',
       url='http://github.com/yacoob/go',
 
-      requires=['bottle (>=0.6, <0.7)'],
+      requires=['bottle (>=0.8)'],
 
       packages=['go'],
       scripts=['go-runner.py'],
