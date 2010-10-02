@@ -47,7 +47,8 @@ def go_command(cmd):
 @bottle.route('/hop/:cmd#.*#')
 def hop_command(cmd):
     params = { 'url': bottle.request.GET.get('url', ''),
-               'id':  bottle.request.GET.get('id', '') };
+               'id':  bottle.request.GET.get('id', ''),
+               'requested_url': bottle.request.url};
     return handle_response(trampoline.handle_command(app, cmd, params));
 
 
