@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import time;
+import urlparse, time;
 
 
 def handle_command(app, cmd, params):
@@ -58,7 +58,9 @@ def handle_command(app, cmd, params):
             'timestamp': item[0],
             'datetime': time.ctime(float(item[0])),
         };
-        base_url = 'http://' + app['host'] + ':' + str(app['port']);
+        # Try to reconstruct base_url from requested one.
+        parsed_req_url = urlparse.urlparse(args['requested_url']);
+        base_url = urlparse.urlunparse(parsed_req_url[0:2] + ('', '', '', ''));
         stack = map(describe, urls);
         args = {
            'stack': stack,

@@ -25,29 +25,30 @@ def index():
     bottle.redirect('/and/list');
 
 
-@bottle.route('/(?P<shortcut>[^&?/*]+)\*')
+@bottle.route('/:shortcut#[^&?/*]+#*')
 def go_edit_that(shortcut):
     # /foo* = edit shortcut 'foo'
     url = '/and/edit?' + urllib.urlencode({'short': shortcut});
     bottle.redirect(url);
 
 
-@bottle.route('/(?P<shortcut>[^&?/*]+)')
+@bottle.route('/:shortcut#[^&?/*]+#')
 def go_there(shortcut):
     return handle_response(redirector.handle_shortcut(app, shortcut));
 
 
-@bottle.route('/and/(?P<cmd>.*)')
+@bottle.route('/and/:cmd#.*#')
 def go_command(cmd):
     params = { 'short': bottle.request.GET.get('short', ''),
                'long':  bottle.request.GET.get('long', '') };
     return handle_response(redirector.handle_command(app, cmd, params));
 
 
-@bottle.route('/hop/(?P<cmd>.*)')
+@bottle.route('/hop/:cmd#.*#')
 def hop_command(cmd):
     params = { 'url': bottle.request.GET.get('url', ''),
-               'id':  bottle.request.GET.get('id', '') };
+               'id':  bottle.request.GET.get('id', ''),
+               'requested_url': bottle.request.url};
     return handle_response(trampoline.handle_command(app, cmd, params));
 
 
@@ -145,4 +146,8 @@ def go():
 app = {};
 
 if (__name__ == '__main__'):
-    go();
+    # if called directly, launch in FastCGI wrapper
+    from flup.server.fcgi import WSGIServer
+    init(app);
+    application = bottle.default_app();
+    WSGIServer(application).run();
