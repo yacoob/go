@@ -5,7 +5,7 @@ from glob import glob
 
 setup(name='go',
       description='URL redirector with a twist',
-      version='0.1',
+      version='0.2',
       author='Jakub Turski',
       author_email='yacoob@gmail.com',
       url='http://github.com/yacoob/go',
