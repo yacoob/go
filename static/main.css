@@ -14,11 +14,11 @@ body {
 
 /* standard links */
 a:link {
-       color: black;
+    color: #BABABA; /* Babarybo, jestes smutna i nieszczesliwa */
 }
 
 a:visited {
-       color: #BABABA; /* Babarybo, jestes smutna i nieszczesliwa */
+    color: black;
 }
 
 a:hover {
@@ -38,10 +38,38 @@ ul.controls {
 }
 
 /* visual feedback for the item under cursor */
-li:hover {
+tr:hover, li:hover {
        background: #4AA7E1;
 }
 
+/* URL tables in trampolina */
+table {
+    width: 100%;
+}
+
+table, td {
+    border: none;
+    border-collapse: collapse;
+    padding: 5px 25px;
+}
+
+tr.topborder>td {
+    padding-bottom: 40px;
+    border-top: 1px solid #BABABA;
+    background: #3D8ABA;
+    text-align: left;
+}
+
+td.timestamp {
+    width: 200px;
+    text-align: right;
+    font-style: italic;
+    font-size: 90%;
+}
+
+td.url {
+
+}
 
 /* stand-outs */
 pre {

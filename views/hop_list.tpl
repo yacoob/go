@@ -7,17 +7,35 @@
 <title>Go {{title}}</title>
 </head><body>
 % include header
-<h1>New URLs:</h1>
-<ul>
+<h1>New URLs</h1>
+<table>
+% oldday = ''
 % for row in stack:
-<li><a href="/hop/pop?id={{row[0]}}">{{row[1]}}</a></li>
+%   day = row[0][0:3]
+%   if day != oldday:
+<tr class="topborder">
+<td class="timestamp" colspan=2>{{row[0][:-7]}}</td>
+</tr>
+%   end
+<tr><td class="timestamp">{{row[0][-5:]}}</td><td class="url"><a href="/hop/pop?id={{row[1]}}">{{row[2]}}</a></td></tr>
+% oldday = day
 % end
-</ul>
-<hr>
-<h1>Old URLs:</h1>
-<ul>
+</table>
+<p>&nbsp;</p>
+<h1>Old URLs</h1>
+<table>
+% oldday = ''
 % for row in viewed:
-<li><a href="{{row[1]}}">{{row[1]}}</a></li>
+%   day = row[0][0:3]
+%   if day != oldday:
+<tr class="topborder">
+<td class="timestamp" colspan=2>{{row[0][:-7]}}</td>
+</tr>
+%   end
+<tr>
+<td class="timestamp">{{row[0][-5:]}}</td><td class="url"><a href="{{row[2]}}">{{row[2]}}</a></td>
+</tr>
+% oldday = day
 % end
-</ul>
+</table>
 </body></html>

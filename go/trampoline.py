@@ -4,6 +4,16 @@
 import urlparse, time;
 
 
+def describe_urls(db):
+    entries = db.items();
+    entries.sort(reverse=True);
+    return [
+        (time.strftime('%a, %d of %b %Y, %H:%M',
+                       time.localtime(float(e[0]))),
+         e[0], e[1])
+        for e in entries]
+
+
 def handle_command(app, cmd, params):
     args = {};
     args.update(params);
@@ -38,13 +48,9 @@ def handle_command(app, cmd, params):
         return { 'action': 'redir', 'url': url };
 
     elif (cmd == 'list'):
-        urls = db.items();
-        urls.sort(reverse=True);
-        old_urls = db_old.items();
-        old_urls.sort(reverse=True);
         args = {
-            'stack':  urls,
-            'viewed': old_urls,
+            'stack':  describe_urls(db),
+            'viewed': describe_urls(db_old),
             'title':  '- trampoline URLs list',
         };
         return { 'action': 'template', 'template_name': 'hop_list',
