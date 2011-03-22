@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import urlparse, time;
+import json, urlparse, time;
 
 
-def describe_urls(db):
+def describe_urls(db, json=False):
     entries = db.items();
     entries.sort(reverse=True);
-    return [
+    descriptive = [
         (time.strftime('%a, %d of %b %Y, %H:%M',
                        time.localtime(float(e[0]))),
          e[0], e[1])
-        for e in entries]
+        for e in entries];
+    if json:
+        return [{'date': x[0], 'id': x[1], 'url': x[2]} for x in descriptive];
+    else:
+        return descriptive;
 
 
 def handle_command(app, cmd, params):
@@ -48,12 +52,23 @@ def handle_command(app, cmd, params):
         return { 'action': 'redir', 'url': url };
 
     elif (cmd == 'list'):
-        args = {
-            'stack':  describe_urls(db),
-            'viewed': describe_urls(db_old),
-            'title':  '- trampoline URLs list',
-        };
-        return { 'action': 'template', 'template_name': 'hop_list',
+        stack = describe_urls(db);
+        viewed = describe_urls(db_old);
+        if (args['json']):
+            args = {
+                'jsonized': json.dumps({'stack': describe_urls(db, True),
+                                        'viewed': describe_urls(db_old, True)})
+                };
+            template = 'json';
+        else:
+            args = {
+                'stack':  describe_urls(db),
+                'viewed': describe_urls(db_old),
+                'title':  '- trampoline URLs list',
+                };
+            template = 'hop_list';
+
+        return { 'action': 'template', 'template_name': template,
                  'template_args': args };
 
     elif (cmd == 'rss'):
