@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="url_list">
+        <item>"http://goodreads.com"</item>
+        <item>"http://google.com"</item>
+        <item>"http://android.com"</item>
+    </string-array>
+</resources>
