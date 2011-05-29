@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UrlList extends ListActivity {
+    // TODO: review scopes, I might have gone wild with 'private' 8)
     private static final String list_url = "http://192.168.1.34:8080/hop/list?json=1";
     private Context ctx;
 
@@ -88,9 +89,10 @@ public class UrlList extends ListActivity {
                         List<JSONObject> new_url_list = new ArrayList<JSONObject>();
                         JSONArray list = result.optJSONArray(name);
                         for (int i = 0; i < list.length(); i++) {
+                            // TODO: consider using separate class for this data instead of JSONObject
                             new_url_list.add(list.getJSONObject(i));
                         }
-                        // TODO: change list instead of recreating whole adapter
+                        // TODO: just change the list instead of recreating whole adapter
                         setListAdapter(new HopListAdapter(ctx, new_url_list));
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -113,6 +115,7 @@ public class UrlList extends ListActivity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
+                // TODO: Use fancy view instead of simple_list_item_1, use ViewHolder
                 convertView = li.inflate(android.R.layout.simple_list_item_1, parent, false);
             }
             String content;
@@ -120,6 +123,7 @@ public class UrlList extends ListActivity {
                 content = getItem(position).getString("url");
             } catch (JSONException e) {
                 e.printStackTrace();
+                // TODO: yeah, right; take care of things like that during JSON parsing
                 content = "<MALFORMED>";
             }
             ((TextView) convertView).setText(content);
@@ -133,6 +137,8 @@ public class UrlList extends ListActivity {
         setContentView(R.layout.main);
         // TODO: check if this is safe/sane
         ctx = this;
+        // TODO: add a refresh button, and alarm to do this refresh on periodical basis
+        // TODO: cache those results locally
         new RefreshList().execute(list_url);
     }
 
