@@ -73,7 +73,7 @@ public class UrlList extends ListActivity {
         }
     }
 
-    private class RefreshList extends AsyncTask<String, Void, JSONObject> {
+    private class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
         private final String[] lists = {"stack"/*, "viewed"*/};
 
         @Override
@@ -139,7 +139,7 @@ public class UrlList extends ListActivity {
         ctx = this;
         // TODO: add a refresh button, and alarm to do this refresh on periodical basis
         // TODO: cache those results locally
-        new RefreshList().execute(list_url);
+        new TaskRefreshList().execute(list_url);
     }
 
     @Override
