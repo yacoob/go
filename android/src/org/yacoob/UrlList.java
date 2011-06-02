@@ -6,9 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -131,15 +129,18 @@ public class UrlList extends ListActivity {
         }
     }
 
+    private void refreshUrlList() {
+        new TaskRefreshList().execute(list_url);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        // TODO: check if this is safe/sane
         ctx = this;
-        // TODO: add a refresh button, and alarm to do this refresh on periodical basis
+        // TODO: add alarm to do this refresh on periodical basis
         // TODO: cache those results locally
-        new TaskRefreshList().execute(list_url);
+        refreshUrlList();
     }
 
     @Override
@@ -147,6 +148,24 @@ public class UrlList extends ListActivity {
         String url = ((TextView) v).getText().toString();
         showInfo(url);
         this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater mi = getMenuInflater();
+        mi.inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.refresh:
+                refreshUrlList();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private void showToast(String msg, int time) {
