@@ -1,4 +1,4 @@
-package org.yacoob;
+package org.yacoob.trampoline;
 
 import android.app.ListActivity;
 import android.content.Context;
