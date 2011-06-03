@@ -84,13 +84,15 @@ public class UrlList extends ListActivity {
             if (result != null) {
                 for (String name : lists) {
                     try {
-                        List<JSONObject> new_url_list = new ArrayList<JSONObject>();
+                        List<UrlEntry> new_url_list = new ArrayList<UrlEntry>();
                         JSONArray list = result.optJSONArray(name);
                         for (int i = 0; i < list.length(); i++) {
-                            // TODO: consider using separate class for this data instead of JSONObject
-                            new_url_list.add(list.getJSONObject(i));
+                            new_url_list.add(new UrlEntry(list.getJSONObject(i)));
                         }
-                        // TODO: just change the list instead of recreating whole adapter
+						/* FIXME: ArrayAdapter<T>.addAll got added in r11.
+						 * Without that method we'd need to iterate through
+						 * new_url_list, and call add() one by one. Unsmurfy.
+						 */
                         setListAdapter(new HopListAdapter(ctx, new_url_list));
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -103,10 +105,10 @@ public class UrlList extends ListActivity {
         }
     }
 
-    private class HopListAdapter extends ArrayAdapter<JSONObject> {
+    private class HopListAdapter extends ArrayAdapter<UrlEntry> {
         private final LayoutInflater li = getLayoutInflater();
 
-        private HopListAdapter(Context context, List<JSONObject> objects) {
+        private HopListAdapter(Context context, List<UrlEntry> objects) {
             super(context, android.R.layout.simple_list_item_1, objects);
         }
 
@@ -116,14 +118,7 @@ public class UrlList extends ListActivity {
                 // TODO: Use fancy view instead of simple_list_item_1, use ViewHolder
                 convertView = li.inflate(android.R.layout.simple_list_item_1, parent, false);
             }
-            String content;
-            try {
-                content = getItem(position).getString("url");
-            } catch (JSONException e) {
-                e.printStackTrace();
-                // TODO: yeah, right; take care of things like that during JSON parsing
-                content = "<MALFORMED>";
-            }
+            String content = getItem(position).toString();            
             ((TextView) convertView).setText(content);
             return convertView;
         }
@@ -145,7 +140,7 @@ public class UrlList extends ListActivity {
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        String url = ((TextView) v).getText().toString();
+        String url = ((UrlEntry) l.getItemAtPosition(position)).getUrl();
         showInfo(url);
         this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
