@@ -1,4 +1,4 @@
-*.iws
+local.properties
 bin/
 gen/
 out/
