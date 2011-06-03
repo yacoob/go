@@ -105,21 +105,36 @@ public class UrlList extends ListActivity {
         }
     }
 
-    private class HopListAdapter extends ArrayAdapter<UrlEntry> {
-        private final LayoutInflater li = getLayoutInflater();
-
+    private static class HopListAdapter extends ArrayAdapter<UrlEntry> {
+        private LayoutInflater li;
+        
         private HopListAdapter(Context context, List<UrlEntry> objects) {
-            super(context, android.R.layout.simple_list_item_1, objects);
+            super(context, R.layout.listitem, objects);
+            li = LayoutInflater.from(context);
         }
+        
+    	static class ViewHolder {
+    		TextView first;
+    		TextView second;
+    	}
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+        	
+        	ViewHolder holder;
+        	
             if (convertView == null) {
-                // TODO: Use fancy view instead of simple_list_item_1, use ViewHolder
-                convertView = li.inflate(android.R.layout.simple_list_item_1, parent, false);
+                convertView = li.inflate(R.layout.listitem, parent, false);
+                holder = new ViewHolder();
+                holder.first = (TextView) convertView.findViewById(R.id.first);
+                holder.second = (TextView) convertView.findViewById(R.id.second);
+                convertView.setTag(holder);
+            } else {
+            	holder = (ViewHolder) convertView.getTag();
             }
-            String content = getItem(position).toString();            
-            ((TextView) convertView).setText(content);
+            UrlEntry item = getItem(position);
+            holder.first.setText(item.getUrl());
+            holder.second.setText(item.getDate());
             return convertView;
         }
     }
