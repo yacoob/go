@@ -26,8 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UrlList extends ListActivity {
-    // TODO: review scopes, I might have gone wild with 'private' 8)
-    private static final String list_url = "http://192.168.1.34:8080/hop/list?json=1";
+	private static final String base_url = "http://192.168.1.34:8080/hop";
+    private static final String list_url = base_url + "/list?json=1";
+    
     private Context ctx;
 
     private static class UrlFetch {
@@ -87,9 +88,9 @@ public class UrlList extends ListActivity {
                         List<UrlEntry> new_url_list = new ArrayList<UrlEntry>();
                         JSONArray list = result.optJSONArray(name);
                         for (int i = 0; i < list.length(); i++) {
-                            new_url_list.add(new UrlEntry(list.getJSONObject(i)));
+                        	new_url_list.add(new UrlEntry(list.getJSONObject(i), name == "stack" ? base_url : null));
                         }
-						/* FIXME: ArrayAdapter<T>.addAll got added in r11.
+						/* XXX: ArrayAdapter<T>.addAll got added in r11.
 						 * Without that method we'd need to iterate through
 						 * new_url_list, and call add() one by one. Unsmurfy.
 						 */
@@ -113,7 +114,7 @@ public class UrlList extends ListActivity {
             li = LayoutInflater.from(context);
         }
         
-    	static class ViewHolder {
+    	private static class ViewHolder {
     		TextView first;
     		TextView second;
     	}
@@ -133,7 +134,7 @@ public class UrlList extends ListActivity {
             	holder = (ViewHolder) convertView.getTag();
             }
             UrlEntry item = getItem(position);
-            holder.first.setText(item.getUrl());
+            holder.first.setText(item.getDisplayUrl());
             holder.second.setText(item.getDate());
             return convertView;
         }
@@ -148,12 +149,18 @@ public class UrlList extends ListActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         ctx = this;
-        // TODO: add alarm to do this refresh on periodical basis
-        // TODO: cache those results locally
-        refreshUrlList();
     }
 
     @Override
+	protected void onResume() {
+		super.onResume();
+        // TODO: add alarm to do this refresh on periodical basis
+        // TODO: cache those results locally
+        refreshUrlList();
+	}
+    
+
+	@Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         String url = ((UrlEntry) l.getItemAtPosition(position)).getUrl();
         showInfo(url);
@@ -182,11 +189,11 @@ public class UrlList extends ListActivity {
         Toast.makeText(getApplicationContext(), msg, time).show();
     }
 
-    void showComplaint(String complaint) {
+    private void showComplaint(String complaint) {
         showToast(complaint, 3000);
     }
 
-    void showInfo(String info) {
+    private void showInfo(String info) {
         showToast(info, 1500);
     }
 }

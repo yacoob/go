@@ -4,17 +4,28 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class UrlEntry {
+	private static final String popUrlFragment = "/pop?id=";
+	
 	public String date = "<????-??-??>";
 	public String url = "http://...";
+	public String displayUrl = "http://...";
 	public String id = "";
 
 	public UrlEntry(JSONObject o) {
 		try {
 			this.date = o.getString("date");
 			this.url = o.getString("url");
+			this.displayUrl = this.url;
 			this.id = o.getString("id");
 		} catch (JSONException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	public UrlEntry(JSONObject o, String trampolineUrl) {
+		this(o);
+		if (trampolineUrl != null) {
+			this.url = trampolineUrl + popUrlFragment + this.id;
 		}
 	}
 	
@@ -42,7 +53,15 @@ public class UrlEntry {
 		this.url = url;
 	}
 
+	public String getDisplayUrl() {
+		return displayUrl;
+	}
+
+	public void setDisplayUrl(String displayUrl) {
+		this.displayUrl = displayUrl;
+	}
+
 	public String toString() {
-		return this.url + '\n' + this.date;
+		return this.displayUrl + '\n' + this.date;
 	}
 }
