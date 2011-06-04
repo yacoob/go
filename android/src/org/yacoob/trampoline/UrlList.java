@@ -29,8 +29,6 @@ public class UrlList extends ListActivity {
 	private static final String base_url = "http://192.168.1.34:8080/hop";
     private static final String list_url = base_url + "/list?json=1";
     
-    private Context ctx;
-
     private static class UrlFetch {
         private static final DefaultHttpClient f = new DefaultHttpClient();
 
@@ -90,11 +88,7 @@ public class UrlList extends ListActivity {
                         for (int i = 0; i < list.length(); i++) {
                         	new_url_list.add(new UrlEntry(list.getJSONObject(i), name == "stack" ? base_url : null));
                         }
-						/* XXX: ArrayAdapter<T>.addAll got added in r11.
-						 * Without that method we'd need to iterate through
-						 * new_url_list, and call add() one by one. Unsmurfy.
-						 */
-                        setListAdapter(new HopListAdapter(ctx, new_url_list));
+                        setUrlList(new_url_list);
                     } catch (JSONException e) {
                         e.printStackTrace();
                         showComplaint(e.getMessage());
@@ -144,11 +138,18 @@ public class UrlList extends ListActivity {
         new TaskRefreshList().execute(list_url);
     }
 
+    private void setUrlList(List<UrlEntry> l) {
+		/* XXX: ArrayAdapter<T>.addAll got added in r11.
+		 * Without that method we'd need to iterate through
+		 * new_url_list, and call add() one by one. Unsmurfy.
+		 */
+    	setListAdapter(new HopListAdapter(this, l));
+    }
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        ctx = this;
     }
 
     @Override
