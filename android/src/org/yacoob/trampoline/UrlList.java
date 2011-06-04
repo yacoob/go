@@ -11,17 +11,10 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,47 +22,6 @@ public class UrlList extends ListActivity {
 	private static final String base_url = "http://192.168.1.34:8080/hop";
     private static final String list_url = base_url + "/list?json=1";
     
-    private static class UrlFetch {
-        private static final DefaultHttpClient f = new DefaultHttpClient();
-
-        private static JSONObject fetchUrl(String url) {
-            JSONObject parsed = null;
-            try {
-                parsed = (JSONObject) new JSONTokener(urlToString(url)).nextValue();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return parsed;
-        }
-
-        private static String urlToString(String url) {
-            BufferedReader reader = null;
-            StringBuilder sb = new StringBuilder();
-            HttpGet r = new HttpGet(url);
-            try {
-                HttpResponse l = f.execute(r);
-                reader = new BufferedReader(new InputStreamReader(l.getEntity().getContent()));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line).append("\n");
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            finally {
-                try {
-                    if (reader != null) {
-                        reader.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return sb.toString();
-        }
-    }
-
     private class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
         private final String[] lists = {"stack"/*, "viewed"*/};
 
@@ -100,7 +52,7 @@ public class UrlList extends ListActivity {
         }
     }
 
-    private static class HopListAdapter extends ArrayAdapter<UrlEntry> {
+    private class HopListAdapter extends ArrayAdapter<UrlEntry> {
         private LayoutInflater li;
         
         private HopListAdapter(Context context, List<UrlEntry> objects) {
@@ -108,7 +60,7 @@ public class UrlList extends ListActivity {
             li = LayoutInflater.from(context);
         }
         
-    	private static class ViewHolder {
+    	private class ViewHolder {
     		TextView first;
     		TextView second;
     	}
