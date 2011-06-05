@@ -29,12 +29,48 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class UrlList extends ListActivity {
-    public static final String LOGTAG = "Trampoline";
-    private static final String base_url = "http://192.168.1.34:8080/hop";
-    private static final String list_url = base_url + "/list?json=1";
-    private static final String filename = "url_cache";
-    private boolean is_offline = false;
+    private class HopListAdapter extends ArrayAdapter<UrlEntry> {
+        private class ViewHolder {
+            TextView first;
+            TextView second;
+        }
 
+        private LayoutInflater li;
+
+        private HopListAdapter(Context context, List<UrlEntry> objects) {
+            super(context, R.layout.listitem, objects);
+            li = LayoutInflater.from(context);
+        }
+
+        public List<UrlEntry> getUrlList() {
+            List<UrlEntry> list = new ArrayList<UrlEntry>();
+            for (int i = 0; i < getCount(); i++) {
+                list.add(getItem(i));
+            }
+            return list;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            ViewHolder holder;
+
+            if (convertView == null) {
+                convertView = li.inflate(R.layout.listitem, parent, false);
+                holder = new ViewHolder();
+                holder.first = (TextView) convertView.findViewById(R.id.first);
+                holder.second = (TextView) convertView
+                        .findViewById(R.id.second);
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
+            UrlEntry item = getItem(position);
+            holder.first.setText(item.getDisplayUrl());
+            holder.second.setText(item.getDate());
+            return convertView;
+        }
+    }
     private class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
         private final String[] lists = {
             "stack"/* , "viewed" */
@@ -71,77 +107,21 @@ public class UrlList extends ListActivity {
             }
         }
     }
+    private static final String base_url = "http://192.168.1.34:8080/hop";
+    private static final String filename = "url_cache";
+    private static final String list_url = base_url + "/list?json=1";
 
-    private class HopListAdapter extends ArrayAdapter<UrlEntry> {
-        private LayoutInflater li;
+    public static final String LOGTAG = "Trampoline";
 
-        private HopListAdapter(Context context, List<UrlEntry> objects) {
-            super(context, R.layout.listitem, objects);
-            li = LayoutInflater.from(context);
-        }
-
-        private class ViewHolder {
-            TextView first;
-            TextView second;
-        }
-
-        public List<UrlEntry> getUrlList() {
-            List<UrlEntry> list = new ArrayList<UrlEntry>();
-            for (int i = 0; i < getCount(); i++) {
-                list.add(getItem(i));
-            }
-            return list;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            ViewHolder holder;
-
-            if (convertView == null) {
-                convertView = li.inflate(R.layout.listitem, parent, false);
-                holder = new ViewHolder();
-                holder.first = (TextView) convertView.findViewById(R.id.first);
-                holder.second = (TextView) convertView
-                        .findViewById(R.id.second);
-                convertView.setTag(holder);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-            UrlEntry item = getItem(position);
-            holder.first.setText(item.getDisplayUrl());
-            holder.second.setText(item.getDate());
-            return convertView;
-        }
+    public static void debug(String msg) {
+        Log.d(LOGTAG, msg);
     }
 
-    private void refreshUrlList() {
-        new TaskRefreshList().execute(list_url);
+    public static void warn(String msg) {
+        Log.w(LOGTAG, msg);
     }
 
-    public void setOnline() {
-        setTitle(R.string.app_name);
-        is_offline = false;
-        debug("I'm online now!");
-    }
-
-    public void setOffline() {
-        // TODO: Should we also serialize lists here, sort of
-        // "last known piece of data"?
-        setTitle(getString(R.string.app_name) + " "
-                + getString(R.string.offline_indicator));
-        is_offline = true;
-        debug("I'm offline now!");
-    }
-
-    private void setUrlList(List<UrlEntry> l) {
-        /*
-         * XXX: ArrayAdapter<T>.addAll got added in r11. Without that method
-         * we'd need to iterate through new_url_list, and call add() one by one.
-         * Unsmurfy.
-         */
-        setListAdapter(new HopListAdapter(this, l));
-    }
+    private boolean is_offline = false;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -156,6 +136,35 @@ public class UrlList extends ListActivity {
             ois.close();
         } catch (Exception e) {
             warn("Problems during deserialization of cache: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater mi = getMenuInflater();
+        mi.inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        UrlEntry item = (UrlEntry) l.getItemAtPosition(position);
+        String url = is_offline == true ? item.getDisplayUrl() : item.getUrl();
+        showInfo(url);
+        this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.refresh:
+            refreshUrlList();
+            return true;
+        case R.id.exit:
+            finish();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
         }
     }
 
@@ -183,37 +192,32 @@ public class UrlList extends ListActivity {
         }
     }
 
-    @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        UrlEntry item = (UrlEntry) l.getItemAtPosition(position);
-        String url = is_offline == true ? item.getDisplayUrl() : item.getUrl();
-        showInfo(url);
-        this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+    private void refreshUrlList() {
+        new TaskRefreshList().execute(list_url);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater mi = getMenuInflater();
-        mi.inflate(R.menu.main, menu);
-        return true;
+    public void setOffline() {
+        // TODO: Should we also serialize lists here, sort of
+        // "last known piece of data"?
+        setTitle(getString(R.string.app_name) + " "
+                + getString(R.string.offline_indicator));
+        is_offline = true;
+        debug("I'm offline now!");
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        case R.id.refresh:
-            refreshUrlList();
-            return true;
-        case R.id.exit:
-            finish();
-            return true;
-        default:
-            return super.onOptionsItemSelected(item);
-        }
+    public void setOnline() {
+        setTitle(R.string.app_name);
+        is_offline = false;
+        debug("I'm online now!");
     }
 
-    private void showToast(String msg, int time) {
-        Toast.makeText(getApplicationContext(), msg, time).show();
+    private void setUrlList(List<UrlEntry> l) {
+        /*
+         * XXX: ArrayAdapter<T>.addAll got added in r11. Without that method
+         * we'd need to iterate through new_url_list, and call add() one by one.
+         * Unsmurfy.
+         */
+        setListAdapter(new HopListAdapter(this, l));
     }
 
     private void showComplaint(String complaint) {
@@ -224,11 +228,7 @@ public class UrlList extends ListActivity {
         showToast(info, 1500);
     }
 
-    public static void warn(String msg) {
-        Log.w(LOGTAG, msg);
-    }
-
-    public static void debug(String msg) {
-        Log.d(LOGTAG, msg);
+    private void showToast(String msg, int time) {
+        Toast.makeText(getApplicationContext(), msg, time).show();
     }
 }
