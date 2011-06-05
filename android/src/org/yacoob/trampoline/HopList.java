@@ -19,7 +19,7 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class UrlList extends ListActivity {
+public class HopList extends ListActivity {
     static final String base_url = "http://192.168.1.34:8080/hop";
     private static final String filename = "url_cache";
     private static final String list_url = base_url + "/list?json=1";

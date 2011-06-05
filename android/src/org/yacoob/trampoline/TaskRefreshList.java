@@ -21,12 +21,12 @@ import android.os.AsyncTask;
  * In short: {@link Activity} that created this task should call
  * {@link #detach()} and use some mechanism to carry over reference to running
  * {@link AsyncTask}. New instance of same activity should call
- * {@link #attach(UrlList)}.
+ * {@link #attach(HopList)}.
  */
 class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
 
     /** This variable is used to access current {@link Activity}. */
-    private UrlList parentActivity = null;
+    private HopList parentActivity = null;
 
     /** Contains names of lists of URLs to expect from Trampoline server. */
     private final String[] lists = {
@@ -40,19 +40,19 @@ class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
      * @param activity
      *            Activity launching this task.
      */
-    TaskRefreshList(final UrlList activity) {
+    TaskRefreshList(final HopList activity) {
         attach(activity);
     }
 
     /**
      * Associate task to activity. This reference will be used in
      * {@link #onPostExecute(JSONObject)} to call
-     * {@link UrlList#refreshDone(List)}.
+     * {@link HopList#refreshDone(List)}.
      * 
      * @param activity
      *            Activity to attach to.
      */
-    void attach(final UrlList activity) {
+    void attach(final HopList activity) {
         this.parentActivity = activity;
     }
 
@@ -93,10 +93,10 @@ class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
                             // If the list we're creating is the stack, point
                             // actual URL to Trampoline.
                             newUrlList.add(new UrlEntry(list.getJSONObject(i),
-                                    name == "stack" ? UrlList.base_url : null));
+                                    name == "stack" ? HopList.base_url : null));
                         }
                     } catch (JSONException e) {
-                        UrlList.warn("Problems parsing JSON response: "
+                        HopList.warn("Problems parsing JSON response: "
                                 + e.getMessage());
                     }
                 }
@@ -106,7 +106,7 @@ class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
             parentActivity = null;
         } else {
             // Yes, This Should Not Happen [tm].
-            UrlList.warn("onPostExecute called without parent activity.");
+            HopList.warn("onPostExecute called without parent activity.");
         }
     }
 }
