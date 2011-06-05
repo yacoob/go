@@ -3,18 +3,13 @@ package org.yacoob.trampoline;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -25,59 +20,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 public class UrlList extends ListActivity {
-    private class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
-        private UrlList parentActivity = null;
-        private final String[] lists = {
-            "stack"/* , "viewed" */
-        };
-
-        protected TaskRefreshList(UrlList activity) {
-            attach(activity);
-        }
-
-        private void attach(UrlList activity) {
-            this.parentActivity = activity;
-        }
-
-        private void detach() {
-            this.parentActivity = null;
-        }
-
-        @Override
-        protected JSONObject doInBackground(String... params) {
-            return UrlFetch.urlToJSONObject(params[0]);
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject result) {
-            if (parentActivity != null) {
-                List<UrlEntry> new_url_list = null;
-                if (result != null) {
-                    for (String name : lists) {
-                        try {
-                            new_url_list = new ArrayList<UrlEntry>();
-                            JSONArray list = result.optJSONArray(name);
-                            for (int i = 0; i < list.length(); i++) {
-                                new_url_list.add(new UrlEntry(list
-                                        .getJSONObject(i),
-                                        name == "stack" ? base_url : null));
-                            }
-                        } catch (JSONException e) {
-                            warn("Problems parsing JSON response: "
-                                    + e.getMessage());
-                            parentActivity.showComplaint(e.getMessage());
-                        }
-                    }
-                }
-                parentActivity.refreshDone(new_url_list);
-                parentActivity = null;
-            } else {
-                warn("Uh. onPostExecute got called without parent activity. That's wrong.");
-            }
-        }
-    }
-
-    private static final String base_url = "http://192.168.1.34:8080/hop";
+    static final String base_url = "http://192.168.1.34:8080/hop";
     private static final String filename = "url_cache";
     private static final String list_url = base_url + "/list?json=1";
     public static final String LOGTAG = "Trampoline";
@@ -184,7 +127,7 @@ public class UrlList extends ListActivity {
         }
     }
 
-    private void refreshDone(List<UrlEntry> list) {
+    void refreshDone(List<UrlEntry> list) {
         if (list != null) {
             setOnline();
             setUrlList(list);
@@ -218,7 +161,7 @@ public class UrlList extends ListActivity {
         setListAdapter(new HopListAdapter(this, l));
     }
 
-    private void showComplaint(String complaint) {
+    void showComplaint(String complaint) {
         showToast(complaint, 3000);
     }
 
