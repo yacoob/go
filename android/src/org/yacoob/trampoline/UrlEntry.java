@@ -1,15 +1,20 @@
 package org.yacoob.trampoline;
 
+import java.io.IOException;
+import java.io.Serializable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class UrlEntry {
+public class UrlEntry implements Serializable {
+	private static final long serialVersionUID = 7195682952024259668L;
+
 	private static final String popUrlFragment = "/pop?id=";
 	
-	public String date = "<????-??-??>";
-	public String url = "http://...";
-	public String displayUrl = "http://...";
-	public String id = "";
+	private String date = "<????-??-??>";
+	private String url = "http://...";
+	private String displayUrl = "http://...";
+	private String id = "";
 
 	public UrlEntry(JSONObject o) {
 		try {
@@ -27,6 +32,14 @@ public class UrlEntry {
 		if (trampolineUrl != null) {
 			this.url = trampolineUrl + popUrlFragment + this.id;
 		}
+	}
+	
+	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+	}
+
+	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
 	}
 	
 	public String getUrl() {

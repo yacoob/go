@@ -19,6 +19,7 @@ class UrlFetch {
         try {
             parsed = (JSONObject) new JSONTokener(urlToString(url)).nextValue();
         } catch (JSONException e) {
+        	// FIXME: this is actually too noisy and will occur when Trampoline is down.
             e.printStackTrace();
         }
         return parsed;

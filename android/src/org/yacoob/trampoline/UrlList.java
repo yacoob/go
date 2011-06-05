@@ -1,26 +1,38 @@
 package org.yacoob.trampoline;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.*;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class UrlList extends ListActivity {
 	private static final String base_url = "http://192.168.1.34:8080/hop";
     private static final String list_url = base_url + "/list?json=1";
+    private static final String filename = "url_cache";
+    private boolean is_offline = false;
     
     private class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
         private final String[] lists = {"stack"/*, "viewed"*/};
@@ -46,8 +58,10 @@ public class UrlList extends ListActivity {
                         showComplaint(e.getMessage());
                     }
                 }
+                setOnline();
             } else {
-                showComplaint("No URLs to show");
+            	setOffline();
+                showComplaint(getString(R.string.fetch_failed));
             }
         }
     }
@@ -63,6 +77,14 @@ public class UrlList extends ListActivity {
     	private class ViewHolder {
     		TextView first;
     		TextView second;
+    	}
+    	
+    	public List<UrlEntry> getUrlList() {
+    		List<UrlEntry> list = new ArrayList<UrlEntry>();
+    		for (int i=0; i < getCount(); i++) {
+    			list.add(getItem(i));
+    		}
+    		return list;
     	}
 
         @Override
@@ -90,7 +112,19 @@ public class UrlList extends ListActivity {
         new TaskRefreshList().execute(list_url);
     }
 
-    private void setUrlList(List<UrlEntry> l) {
+    public void setOnline() {
+		setTitle(R.string.app_name);
+		is_offline = false;
+	}
+    
+    public void setOffline() {
+		// TODO: Should we also serialize lists here, sort of
+		// "last known piece of data"?
+    	setTitle(getString(R.string.app_name) + " " + getString(R.string.offline_indicator));
+    	is_offline = true;
+    }
+
+	private void setUrlList(List<UrlEntry> l) {
 		/* XXX: ArrayAdapter<T>.addAll got added in r11.
 		 * Without that method we'd need to iterate through
 		 * new_url_list, and call add() one by one. Unsmurfy.
@@ -98,24 +132,48 @@ public class UrlList extends ListActivity {
     	setListAdapter(new HopListAdapter(this, l));
     }
     
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i("sproing", "jestem w onCreate!");
         setContentView(R.layout.main);
+		try {
+			ObjectInputStream ois = new ObjectInputStream(openFileInput(filename));
+			setUrlList((List<UrlEntry>) ois.readObject());
+			ois.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
     @Override
 	protected void onResume() {
 		super.onResume();
-        // TODO: add alarm to do this refresh on periodical basis
-        // TODO: cache those results locally
+        Log.i("sproing", "jestem w onResume!");
+		// TODO: add alarm to do this refresh on periodical basis
         refreshUrlList();
 	}
     
+	@Override
+	protected void onStop() {
+		super.onStop();
+		// FIXME: Is this the right place to save this to disk? As it stands,
+		// it'll be called every time user pops an URL. Perhaps onDestroy is
+		// better place for this.
+		try {
+			ObjectOutputStream oos = new ObjectOutputStream(openFileOutput(filename, Context.MODE_PRIVATE));
+			oos.writeObject(((HopListAdapter) getListAdapter()).getUrlList());
+			oos.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	@Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        String url = ((UrlEntry) l.getItemAtPosition(position)).getUrl();
+		UrlEntry item = (UrlEntry) l.getItemAtPosition(position);
+        String url = is_offline == true ? item.getDisplayUrl() : item.getUrl();
         showInfo(url);
         this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
@@ -133,6 +191,9 @@ public class UrlList extends ListActivity {
             case R.id.refresh:
                 refreshUrlList();
                 return true;
+            case R.id.exit:
+            	finish();
+            	return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
