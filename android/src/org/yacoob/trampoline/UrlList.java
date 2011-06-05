@@ -71,10 +71,24 @@ public class UrlList extends ListActivity {
             return convertView;
         }
     }
+
     private class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
+        private UrlList parentActivity = null;
         private final String[] lists = {
             "stack"/* , "viewed" */
         };
+
+        protected TaskRefreshList(UrlList activity) {
+            attach(activity);
+        }
+
+        private void attach(UrlList activity) {
+            this.parentActivity = activity;
+        }
+
+        private void detach() {
+            this.parentActivity = null;
+        }
 
         @Override
         protected JSONObject doInBackground(String... params) {
@@ -83,35 +97,38 @@ public class UrlList extends ListActivity {
 
         @Override
         protected void onPostExecute(JSONObject result) {
-            if (result != null) {
-                for (String name : lists) {
-                    try {
-                        List<UrlEntry> new_url_list = new ArrayList<UrlEntry>();
-                        JSONArray list = result.optJSONArray(name);
-                        for (int i = 0; i < list.length(); i++) {
-                            new_url_list.add(new UrlEntry(
-                                    list.getJSONObject(i),
-                                    name == "stack" ? base_url : null));
+            if (parentActivity != null) {
+                List<UrlEntry> new_url_list = null;
+                if (result != null) {
+                    for (String name : lists) {
+                        try {
+                            new_url_list = new ArrayList<UrlEntry>();
+                            JSONArray list = result.optJSONArray(name);
+                            for (int i = 0; i < list.length(); i++) {
+                                new_url_list.add(new UrlEntry(list
+                                        .getJSONObject(i),
+                                        name == "stack" ? base_url : null));
+                            }
+                        } catch (JSONException e) {
+                            warn("Problems parsing JSON response: "
+                                    + e.getMessage());
+                            parentActivity.showComplaint(e.getMessage());
                         }
-                        setUrlList(new_url_list);
-                    } catch (JSONException e) {
-                        warn("Problems parsing JSON response: "
-                                + e.getMessage());
-                        showComplaint(e.getMessage());
                     }
                 }
-                setOnline();
+                parentActivity.refreshDone(new_url_list);
+                parentActivity = null;
             } else {
-                setOffline();
-                showComplaint(getString(R.string.fetch_failed));
+                warn("Uh. onPostExecute got called without parent activity. That's wrong.");
             }
         }
     }
+
     private static final String base_url = "http://192.168.1.34:8080/hop";
     private static final String filename = "url_cache";
     private static final String list_url = base_url + "/list?json=1";
-
     public static final String LOGTAG = "Trampoline";
+    private TaskRefreshList refresh_task;
 
     public static void debug(String msg) {
         Log.d(LOGTAG, msg);
@@ -123,11 +140,21 @@ public class UrlList extends ListActivity {
 
     private boolean is_offline = false;
 
+    private void maybeSerializeCache() {
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(openFileOutput(
+                    filename, Context.MODE_PRIVATE));
+            oos.writeObject(((HopListAdapter) getListAdapter()).getUrlList());
+            oos.close();
+        } catch (IOException e) {
+            warn("Problems during serialization of cache: " + e.getMessage());
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        debug("jestem w onCreate!");
         setContentView(R.layout.main);
         try {
             ObjectInputStream ois = new ObjectInputStream(
@@ -136,6 +163,11 @@ public class UrlList extends ListActivity {
             ois.close();
         } catch (Exception e) {
             warn("Problems during deserialization of cache: " + e.getMessage());
+        }
+        // Recover background task, if there's one.
+        refresh_task = (TaskRefreshList) getLastNonConfigurationInstance();
+        if (refresh_task != null) {
+            refresh_task.attach(this);
         }
     }
 
@@ -171,9 +203,16 @@ public class UrlList extends ListActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        debug("jestem w onResume!");
         // TODO: add alarm to do this refresh on periodical basis
         refreshUrlList();
+    }
+
+    @Override
+    public Object onRetainNonConfigurationInstance() {
+        if (refresh_task != null) {
+            refresh_task.detach();
+        }
+        return refresh_task;
     }
 
     @Override
@@ -182,26 +221,32 @@ public class UrlList extends ListActivity {
         // FIXME: Is this the right place to save this to disk? As it stands,
         // it'll be called every time user pops an URL. Perhaps onDestroy is
         // better place for this.
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(openFileOutput(
-                    filename, Context.MODE_PRIVATE));
-            oos.writeObject(((HopListAdapter) getListAdapter()).getUrlList());
-            oos.close();
-        } catch (IOException e) {
-            warn("Problems during serialization of cache: " + e.getMessage());
-        }
+        maybeSerializeCache();
     }
 
     private void refreshUrlList() {
-        new TaskRefreshList().execute(list_url);
+        if (refresh_task == null) {
+            refresh_task = new TaskRefreshList(this);
+            refresh_task.execute(list_url);
+        }
+    }
+
+    private void refreshDone(List<UrlEntry> list) {
+        if (list != null) {
+            setOnline();
+            setUrlList(list);
+        } else {
+            setOffline();
+            showComplaint(getString(R.string.fetch_failed));
+        }
+        refresh_task = null;
     }
 
     public void setOffline() {
-        // TODO: Should we also serialize lists here, sort of
-        // "last known piece of data"?
         setTitle(getString(R.string.app_name) + " "
                 + getString(R.string.offline_indicator));
         is_offline = true;
+        maybeSerializeCache();
         debug("I'm offline now!");
     }
 
