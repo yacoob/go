@@ -23,7 +23,7 @@ public class UrlEntry implements Serializable {
 			this.displayUrl = this.url;
 			this.id = o.getString("id");
 		} catch (JSONException e) {
-			e.printStackTrace();
+			UrlList.warn("Can't construct UrlEntry out of: " + o.toString());
 		}
 	}
 	

@@ -29,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class UrlList extends ListActivity {
+	public static final String LOGTAG = "Trampoline";
 	private static final String base_url = "http://192.168.1.34:8080/hop";
     private static final String list_url = base_url + "/list?json=1";
     private static final String filename = "url_cache";
@@ -54,7 +55,7 @@ public class UrlList extends ListActivity {
                         }
                         setUrlList(new_url_list);
                     } catch (JSONException e) {
-                        e.printStackTrace();
+                    	warn("Problems parsing JSON response: " + e.getMessage());
                         showComplaint(e.getMessage());
                     }
                 }
@@ -113,8 +114,9 @@ public class UrlList extends ListActivity {
     }
 
     public void setOnline() {
-		setTitle(R.string.app_name);
-		is_offline = false;
+    	setTitle(R.string.app_name);
+    	is_offline = false;
+    	debug("I'm online now!");
 	}
     
     public void setOffline() {
@@ -122,6 +124,7 @@ public class UrlList extends ListActivity {
 		// "last known piece of data"?
     	setTitle(getString(R.string.app_name) + " " + getString(R.string.offline_indicator));
     	is_offline = true;
+    	debug("I'm offline now!");
     }
 
 	private void setUrlList(List<UrlEntry> l) {
@@ -136,21 +139,21 @@ public class UrlList extends ListActivity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i("sproing", "jestem w onCreate!");
+        debug("jestem w onCreate!");
         setContentView(R.layout.main);
 		try {
 			ObjectInputStream ois = new ObjectInputStream(openFileInput(filename));
 			setUrlList((List<UrlEntry>) ois.readObject());
 			ois.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			warn("Problems during deserialization of cache: " + e.getMessage());
 		}
     }
 
     @Override
 	protected void onResume() {
 		super.onResume();
-        Log.i("sproing", "jestem w onResume!");
+        debug("jestem w onResume!");
 		// TODO: add alarm to do this refresh on periodical basis
         refreshUrlList();
 	}
@@ -166,7 +169,7 @@ public class UrlList extends ListActivity {
 			oos.writeObject(((HopListAdapter) getListAdapter()).getUrlList());
 			oos.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			warn("Problems during serialization of cache: " + e.getMessage());
 		}
 	}
 
@@ -209,5 +212,14 @@ public class UrlList extends ListActivity {
 
     private void showInfo(String info) {
         showToast(info, 1500);
+    }
+
+
+    public static void warn(String msg) {
+		Log.w(LOGTAG, msg);
+	}
+    
+    public static void debug(String msg) {
+    	Log.d(LOGTAG, msg);
     }
 }

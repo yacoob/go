@@ -17,28 +17,32 @@ class UrlFetch {
     protected static JSONObject fetchUrl(String url) {
         JSONObject parsed = null;
         try {
-            parsed = (JSONObject) new JSONTokener(urlToString(url)).nextValue();
+            String json_blob = urlToString(url);
+        	if (json_blob != null) {
+        		parsed = (JSONObject) new JSONTokener(json_blob).nextValue();
+        	}
         } catch (JSONException e) {
-        	// FIXME: this is actually too noisy and will occur when Trampoline is down.
-            e.printStackTrace();
+        	UrlList.warn("Trampoline server response is not a valid JSON: " + e.getMessage());
         }
         return parsed;
     }
 
     protected static String urlToString(String url) {
         BufferedReader reader = null;
-        StringBuilder sb = new StringBuilder();
-        HttpGet r = new HttpGet(url);
+        String response = null;
         try {
-            HttpResponse l = f.execute(r);
+            HttpGet r = new HttpGet(url);
+        	HttpResponse l = f.execute(r);
             reader = new BufferedReader(new InputStreamReader(l.getEntity().getContent()));
 
             String line;
+            StringBuilder sb = new StringBuilder();
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
             }
+            response = sb.toString();
         } catch (IOException e) {
-            e.printStackTrace();
+        	UrlList.warn("Problems talking to Trampoline server: " + e.getMessage());
         }
         finally {
             try {
@@ -46,9 +50,9 @@ class UrlFetch {
                     reader.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+            	UrlList.warn("Error closing connection to Trampoline server: " + e.getMessage());
             }
         }
-        return sb.toString();
+        return response;
     }
 }
