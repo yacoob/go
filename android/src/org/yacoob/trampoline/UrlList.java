@@ -17,61 +17,14 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class UrlList extends ListActivity {
-    private class HopListAdapter extends ArrayAdapter<UrlEntry> {
-        private class ViewHolder {
-            TextView first;
-            TextView second;
-        }
-
-        private LayoutInflater li;
-
-        private HopListAdapter(Context context, List<UrlEntry> objects) {
-            super(context, R.layout.listitem, objects);
-            li = LayoutInflater.from(context);
-        }
-
-        public List<UrlEntry> getUrlList() {
-            List<UrlEntry> list = new ArrayList<UrlEntry>();
-            for (int i = 0; i < getCount(); i++) {
-                list.add(getItem(i));
-            }
-            return list;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            ViewHolder holder;
-
-            if (convertView == null) {
-                convertView = li.inflate(R.layout.listitem, parent, false);
-                holder = new ViewHolder();
-                holder.first = (TextView) convertView.findViewById(R.id.first);
-                holder.second = (TextView) convertView
-                        .findViewById(R.id.second);
-                convertView.setTag(holder);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-            UrlEntry item = getItem(position);
-            holder.first.setText(item.getDisplayUrl());
-            holder.second.setText(item.getDate());
-            return convertView;
-        }
-    }
-
     private class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
         private UrlList parentActivity = null;
         private final String[] lists = {
