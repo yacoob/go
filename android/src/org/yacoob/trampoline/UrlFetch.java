@@ -11,29 +11,55 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-class UrlFetch {
-    private static final DefaultHttpClient f = new DefaultHttpClient();
+/**
+ * Utility class for fetching JSON content from a remote server and turning it
+ * into {@link JSONObject}.
+ */
+final class UrlFetch {
 
-    protected static JSONObject fetchUrl(String url) {
+    /**
+     * Dummy constructor to stop instantiations.
+     */
+    private UrlFetch() {
+    }
+
+    /** {@link DefaultHttpClient} used for fetching pages from outside. */
+    private static final DefaultHttpClient FETCHER = new DefaultHttpClient();
+
+    /**
+     * Fetches an URL, tries to parse it into {@link JSONObject}.
+     *
+     * @param url URL to fetch
+     * @return the resulting {@link JSONobject}
+     */
+    protected static JSONObject urlToJSONObject(final String url) {
         JSONObject parsed = null;
         try {
-            String json_blob = urlToString(url);
-        	if (json_blob != null) {
-        		parsed = (JSONObject) new JSONTokener(json_blob).nextValue();
-        	}
+            String jsonblob = urlToString(url);
+            if (jsonblob != null) {
+                parsed = (JSONObject) new JSONTokener(jsonblob).nextValue();
+            }
         } catch (JSONException e) {
-        	UrlList.warn("Trampoline server response is not a valid JSON: " + e.getMessage());
+            UrlList.warn("Trampoline server response is not a valid JSON: "
+                    + e.getMessage());
         }
         return parsed;
     }
 
-    protected static String urlToString(String url) {
+    /**
+     * Fetches an URL.
+     *
+     * @param url URL to fetch
+     * @return content of the page as {@link String}
+     */
+    protected static String urlToString(final String url) {
         BufferedReader reader = null;
         String response = null;
         try {
             HttpGet r = new HttpGet(url);
-        	HttpResponse l = f.execute(r);
-            reader = new BufferedReader(new InputStreamReader(l.getEntity().getContent()));
+            HttpResponse l = FETCHER.execute(r);
+            reader = new BufferedReader(new InputStreamReader(l.getEntity()
+                    .getContent()));
 
             String line;
             StringBuilder sb = new StringBuilder();
@@ -42,15 +68,16 @@ class UrlFetch {
             }
             response = sb.toString();
         } catch (IOException e) {
-        	UrlList.warn("Problems talking to Trampoline server: " + e.getMessage());
-        }
-        finally {
+            UrlList.warn("Problems talking to remote server: "
+                    + e.getMessage());
+        } finally {
             try {
                 if (reader != null) {
                     reader.close();
                 }
             } catch (IOException e) {
-            	UrlList.warn("Error closing connection to Trampoline server: " + e.getMessage());
+                UrlList.warn("Error closing connection to remote server: "
+                        + e.getMessage());
             }
         }
         return response;
