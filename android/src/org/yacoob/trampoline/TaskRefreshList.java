@@ -93,10 +93,10 @@ class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
                             // If the list we're creating is the stack, point
                             // actual URL to Trampoline.
                             newUrlList.add(new UrlEntry(list.getJSONObject(i),
-                                    name == "stack" ? HopList.base_url : null));
+                                    name == "stack" ? Hop.BASEURL : null));
                         }
                     } catch (JSONException e) {
-                        HopList.warn("Problems parsing JSON response: "
+                        Hop.warn("Problems parsing JSON response: "
                                 + e.getMessage());
                     }
                 }
@@ -106,7 +106,7 @@ class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
             parentActivity = null;
         } else {
             // Yes, This Should Not Happen [tm].
-            HopList.warn("onPostExecute called without parent activity.");
+            Hop.warn("onPostExecute called without parent activity.");
         }
     }
 }

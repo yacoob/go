@@ -65,7 +65,7 @@ public final class UrlEntry implements Serializable {
             this.displayUrl = this.url;
             this.id = o.getString("id");
         } catch (JSONException e) {
-            HopList.warn("JSON object '" + o.toString()
+            Hop.warn("JSON object '" + o.toString()
                     + "' is unsuitable for conversion to UrlEntry: "
                     + e.getMessage());
         }

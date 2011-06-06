@@ -40,7 +40,7 @@ final class UrlFetch {
                 parsed = (JSONObject) new JSONTokener(jsonblob).nextValue();
             }
         } catch (JSONException e) {
-            HopList.warn("Trampoline server response is not a valid JSON: "
+            Hop.warn("Trampoline server response is not a valid JSON: "
                     + e.getMessage());
         }
         return parsed;
@@ -68,7 +68,7 @@ final class UrlFetch {
             }
             response = sb.toString();
         } catch (IOException e) {
-            HopList.warn("Problems talking to remote server: "
+            Hop.warn("Problems talking to remote server: "
                     + e.getMessage());
         } finally {
             try {
@@ -76,7 +76,7 @@ final class UrlFetch {
                     reader.close();
                 }
             } catch (IOException e) {
-                HopList.warn("Error closing connection to remote server: "
+                Hop.warn("Error closing connection to remote server: "
                         + e.getMessage());
             }
         }
