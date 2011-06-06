@@ -21,12 +21,12 @@ import android.os.AsyncTask;
  * In short: {@link Activity} that created this task should call
  * {@link #detach()} and use some mechanism to carry over reference to running
  * {@link AsyncTask}. New instance of same activity should call
- * {@link #attach(HopList)}.
+ * {@link #attach(HopListActivity)}.
  */
 class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
 
     /** This variable is used to access current {@link Activity}. */
-    private HopList parentActivity = null;
+    private HopListActivity parentActivity = null;
 
     /** Contains names of lists of URLs to expect from Trampoline server. */
     private final String[] lists = {
@@ -40,19 +40,19 @@ class TaskRefreshList extends AsyncTask<String, Void, JSONObject> {
      * @param activity
      *            Activity launching this task.
      */
-    TaskRefreshList(final HopList activity) {
+    TaskRefreshList(final HopListActivity activity) {
         attach(activity);
     }
 
     /**
      * Associate task to activity. This reference will be used in
      * {@link #onPostExecute(JSONObject)} to call
-     * {@link HopList#refreshDone(List)}.
+     * {@link HopListActivity#refreshDone(List)}.
      * 
      * @param activity
      *            Activity to attach to.
      */
-    void attach(final HopList activity) {
+    void attach(final HopListActivity activity) {
         this.parentActivity = activity;
     }
 

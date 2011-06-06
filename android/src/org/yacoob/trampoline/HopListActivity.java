@@ -16,7 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
-public class HopList extends ListActivity {
+public class HopListActivity extends ListActivity {
     private Hop app;
     private boolean is_offline = false;
     private TaskRefreshList refresh_task;
@@ -97,6 +97,7 @@ public class HopList extends ListActivity {
             return super.onOptionsItemSelected(item);
         }
     }
+    
 
     private void maybeSerializeCache() {
         // TODO: Make this smarter and do NOT dump file every time we're called.
