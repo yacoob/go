@@ -7,7 +7,7 @@ var __minimal_poll_interval = 30;
 
 // default values of preferences, as stored in localStorage (strings)
 var __default_prefs = {
-    'base_url':         'http://v:9099',    // base URL of Trampolina
+    'base_url':         'http://go/hop',    // base URL of Trampolina
     'poll_interval':    '600',              // how often should we poll RSS?
     'hide_push':        '1',                // hide popup after 'push' button was clicked?
     'hide_pop':         '1',                // hide popup after 'pop' button was clicked?
