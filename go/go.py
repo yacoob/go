@@ -44,7 +44,7 @@ def go_command(cmd):
     return handle_response(redirector.handle_command(app, cmd, params));
 
 
-@bottle.route('/hop/:cmd')
+@bottle.route('/hop/:cmd#.*#')
 def hop_command(cmd):
     params = { 'url': bottle.request.GET.get('url', ''),
                'id':  bottle.request.GET.get('id', ''),

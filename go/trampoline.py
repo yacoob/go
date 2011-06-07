@@ -113,6 +113,6 @@ def handle_command(app, cmd, params):
     if cmd_map.has_key(cmd):
         result = cmd_map[cmd](app, args);
     else:
-        result = cmd_map['list'](app, args);
+        result = { 'action': 'redir', 'url': '/hop/list' };
 
     return result;

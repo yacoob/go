@@ -55,7 +55,8 @@ class BasicUsageTestCase(TrampolineTest):
     def testRssCommand(self):
         self.app['hop.db'][time.time()] = 'http://hell.pl';
         r = { 'action': 'template', 'template_name': 'hop_rss' };
-        p = trampoline.handle_command(self.app, 'rss', {});
+        p = trampoline.handle_command(self.app, 'rss', {'requested_url':
+            'http://}localhost:8080/hop/rss'});
         self.assertDictContainsSubset(r, p);
         self.assertEquals(len(p['template_args']['stack']), 2);
 
@@ -112,7 +113,7 @@ class BasicUsageTestCase(TrampolineTest):
     def testListCommand(self):
         self.app['hop.db'][time.time()] = 'http://hell.pl';
         r = { 'action': 'template', 'template_name': 'hop_list' };
-        p = trampoline.handle_command(self.app, 'list', {});
+        p = trampoline.handle_command(self.app, 'list', { 'json': '' });
         self.assertDictContainsSubset(r, p);
         self.assertEquals(len(p['template_args']['stack']), 2);
 
