@@ -65,7 +65,12 @@ def init(app):
         optparse.make_option(
             '-D', '--debug',
             action='store_true', dest='debug',
-            help='enable debug mode [off]',
+            help='enable Bottle debug mode [off]',
+        ),
+        optparse.make_option(
+            '-n', '--nofork',
+            action='store_true', dest='nofork',
+            help='do not daemonize at start [false]',
         ),
         optparse.make_option(
             '-d', '--db-dir',
@@ -86,7 +91,7 @@ def init(app):
     ]
     parser.add_options(option_list)
     parser.set_defaults(
-        debug=False, db_dir='/tmp', data_dir='/usr/share/go',
+        debug=False, nofork=False, db_dir='/tmp', data_dir='/usr/share/go',
         host='localhost', port=8080,
     )
 
@@ -130,14 +135,11 @@ def daemonize():
 
 
 def run(app):
-    debugmode, host, port = app['debug'], app['host'], app['port']
-
-    # run bottle
-    if debugmode:
-        bottle.debug(debugmode)
-    else:
+    if app['debug']:
+        bottle.debug(True)
+    if (not app['nofork']):
         daemonize()
-    bottle.run(host=host, port=port, reloader=debugmode)
+    bottle.run(host=app['host'], port=app['port'])
 
 
 def go():
