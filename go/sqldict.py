@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import hashlib, os, sqlite3, threading
+import hashlib, sqlite3, threading
 import cPickle as pickle
 import UserDict
 
@@ -9,7 +9,7 @@ import UserDict
 class sqldict(UserDict.DictMixin):
     def __init__(self, table=None, filename=None):
         if (not filename):
-            filename = os.tmpnam()
+            filename = ':memory:'
         self.db = sqlite3.connect(filename, check_same_thread=False)
         self.filename = filename
         self.lock = threading.RLock()
@@ -95,7 +95,7 @@ class sqldict(UserDict.DictMixin):
     def __delitem__(self, key):
         table_key = self.__hash_key(key)
         self.lock.acquire()
-        cursor = self.__execute(
+        self.__execute(
             'delete from %(tablename)s where key = "%(key)s";' %
             {
                 'key': table_key,
