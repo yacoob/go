@@ -4,12 +4,14 @@
 
 from bottle import Bottle, request, template, redirect, response
 from sqldict_plugin import sqldictPlugin
+from urlparse import urlunsplit
 import threading
 import time
-from urlparse import urlunsplit
+
 
 app = Bottle()
 app.timestamp_lock = threading.Lock()
+
 
 def provisionDbs(db, db_old):
     app.install(sqldictPlugin(keyword='db', filename=db))
@@ -88,4 +90,3 @@ if __name__ == "__main__":
     bottle.default_app().mount(app, '/hop')
     provisionDbs(None, None)
     bottle.run()
-
