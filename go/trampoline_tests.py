@@ -119,4 +119,5 @@ class BasicUsageTestCase(TrampolineTest):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    pass
+    #unittest.main()

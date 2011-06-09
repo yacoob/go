@@ -9,9 +9,9 @@
 % for row in stack:
     <item>
         <title>{{row['url']}}</title>
-        <link>{{pop_url}}{{row['timestamp']}}</link>
+        <link>{{pop_url}}{{row['id']}}</link>
         <description>{{row['url']}}</description>
-        <pubDate>{{row['datetime']}}</pubDate>
+        <pubDate>{{row['date']}}</pubDate>
     </item>
 % end
 

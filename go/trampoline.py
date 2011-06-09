@@ -1,118 +1,91 @@
 #!/usr/bin/env python
 # coding: utf-8
+# pylint: disable-msg=W0142
 
-import json, urlparse, time
+from bottle import Bottle, request, template, redirect, response
+from sqldict_plugin import sqldictPlugin
+import threading
+import time
+from urlparse import urlunsplit
+
+app = Bottle()
+app.timestamp_lock = threading.Lock()
+
+def provisionDbs(db, db_old):
+    app.install(sqldictPlugin(keyword='db', filename=db))
+    app.install(sqldictPlugin(keyword='db_old', filename=db_old))
 
 def describe_urls(db, json=False):
     entries = db.items()
     entries.sort(reverse=True)
-    descriptive = [
-        (time.strftime('%a, %d of %b %Y, %H:%M',
-                       time.localtime(float(e[0]))),
-         e[0], e[1])
-        for e in entries]
+    descriptive = [(time.ctime(float(e[0])), e[0], e[1]) for e in entries]
     if json:
         return [{'date': x[0], 'id': x[1], 'url': x[2]} for x in descriptive]
     else:
         return descriptive
 
-
-def push_url(app, args):
-    if (args.has_key('url') and args['url']):
-        db = app['hop.db']
-        app['timestamp_lock'].acquire()
-        db[str(time.time())] = args['url']
-        app['timestamp_lock'].release()
-        args['title'] = '- trampoline push succeeded'
-        return { 'action': 'template', 'template_name': 'hop_msg',
-                 'template_args': args }
+@app.route('/push')
+def push_url(db):
+    url = request.params.get('url', None)
+    if url:
+        app.timestamp_lock.acquire()
+        db[str(time.time())] = url
+        app.timestamp_lock.release()
+        return template('hop_msg', title='- trampoline push succeeded', url=url)
     else:
-        return { 'action': 'redir', 'url': '/hop/list' }
+        redirect('/list')
 
-
-def pop_url(app, args):
-    db = app['hop.db']
-    db_old = app['hop_old.db']
+@app.route('/pop', name='pop')
+def pop_url(db, db_old):
     urls_keys = db.keys()
     urls_keys.sort()
     latest_id = urls_keys[-1] if len(urls_keys) else 0
-    id = args['id'] if (args.has_key('id') and args['id']) else latest_id
-    if (id not in urls_keys):
-        return { 'action': 'redir', 'url': '/hop/list' }
+    url_id = request.params.get('id', latest_id)
+    if (url_id not in urls_keys):
+        redirect('/list')
 
-    url = db[id]
-    del db[id]
+    url = db[url_id]
+    del db[url_id]
 
     # FIXME: purge old urls from db_old
-    db_old[id] = url
+    db_old[url_id] = url
 
-    return { 'action': 'redir', 'url': url }
+    redirect(url)
 
-
-def list_urls(app, args):
-    db = app['hop.db']
-    db_old = app['hop_old.db']
-    if (args['json']):
-        args = {
-            'jsonized': json.dumps({'stack': describe_urls(db, True),
-                                    'viewed': describe_urls(db_old, True)})
-            }
-        template = 'json'
+@app.route('/list', name='list')
+def list_url(db, db_old):
+    if request.params.get('json', None):
+        return {'stack': describe_urls(db, True),
+                'viewed': describe_urls(db_old, True)}
     else:
-        args = {
+        kwargs = {
+            'pop_url': app.get_url('pop'),
             'stack':  describe_urls(db),
             'viewed': describe_urls(db_old),
             'title':  '- trampoline URLs list',
             }
-        template = 'hop_list'
+        return template('hop_list', **kwargs)
 
-    return { 'action': 'template', 'template_name': template,
-             'template_args': args }
-
-
-def rss(app, args):
-    db = app['hop.db']
-    urls = db.items()
-    urls.sort(reverse=True)
-    describe = lambda item: {
-        'url': item[1],
-        'timestamp': item[0],
-        'datetime': time.ctime(float(item[0])),
-    }
-    # Try to reconstruct base_url from requested one.
-    parsed_req_url = urlparse.urlparse(args['requested_url'])
-    base_url = urlparse.urlunparse(parsed_req_url[0:2] + ('', '', '', ''))
-    stack = map(describe, urls)
-    args = {
+@app.route('/rss')
+def rss(db):
+    base_url = urlunsplit(request.urlparts[0:2] + ('', '', ''))
+    stack = describe_urls(db, True)
+    kwargs = {
        'stack': stack,
        'title': '- new trampoline URLs',
        'description': 'New URLs on trampoline',
        'timestamp': time.ctime(),
-       'list_url': base_url + '/hop/list',
-       'pop_url': base_url + '/hop/pop?id=',
+       'list_url': base_url + app.get_url('list'),
+       'pop_url': base_url + app.get_url('pop') + '?id=',
     }
-    return { 'action': 'template', 'template_name': 'hop_rss',
-             'template_args': args, 'content_type': 'text/xml' }
+    response.content_type = 'text/xml'
+    return template('hop_rss', **kwargs)
 
 
-def rest(app, args):
-    return { 'action': 'redir', 'url': '/hop/list' }
+if __name__ == "__main__":
+    import bottle
+    bottle.debug(True)
+    bottle.default_app().mount(app, '/hop')
+    provisionDbs(None, None)
+    bottle.run()
 
-
-def handle_command(app, cmd, params):
-
-    cmd_map = { 'push': push_url,
-                'pop':  pop_url,
-                'list': list_urls,
-                'rss':  rss,
-                'rest': rest }
-
-    args = {}
-    args.update(params)
-
-    if cmd_map.has_key(cmd):
-        result = cmd_map[cmd](app, args)
-    else:
-        result = { 'action': 'redir', 'url': '/hop/list' }
-
-    return result

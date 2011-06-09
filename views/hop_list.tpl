@@ -18,7 +18,7 @@
 <td class="timestamp" colspan=2>{{row[0][:-7]}}</td>
 </tr>
 %     end
-<tr><td class="timestamp">{{row[0][-5:]}}</td><td class="url"><a href="/hop/pop?id={{row[1]}}">{{row[2]}}</a></td></tr>
+<tr><td class="timestamp">{{row[0][-5:]}}</td><td class="url"><a href="{{pop_url}}?id={{row[1]}}">{{row[2]}}</a></td></tr>
 %     oldday = day
 %   end
 </table>
