@@ -1,80 +1,98 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from bottle import Bottle, request, template, redirect
+from sqldict_plugin import sqldictPlugin
 import urllib
 
 
-def handle_shortcut(app, shortcut):
-    db = app['and.db']
+app = Bottle()
+
+
+def provisionDbs(db, db_old):
+    app.install(sqldictPlugin(keyword='db', filename=db))
+
+@app.route('/')
+@app.route('/list', name='list')
+def listShortcuts(db):
+        shortcuts = db.items()
+        shortcuts.sort()
+        kwargs = {
+            'list':  shortcuts,
+            'title': '- shortcuts list',
+        }
+        return template('go_list', **kwargs)
+
+@app.route('/:shortcut#[^&?/*]+#')
+def handleShortcut(shortcut, db):
     if (db.has_key(shortcut)):
         # if redirect already exist, just go there
         url = db[shortcut]
     else:
         # if it doesn't, redirect to prefilled edit form
-        url = '/and/add?' + urllib.urlencode({'short': shortcut})
-    return { 'action': 'redir', 'url': url }
+        url = app.get_url('add') + '?' + urllib.urlencode({'short': shortcut})
+    redirect(url)
 
-
-def handle_command(app, cmd, params):
-    args = { 'short': '', 'long': '' }
-    args.update(params)
-    db = app['and.db']
-
-    if (cmd == 'add'):
-        # add new redirect
-        args['message'] = 'Add a new shortcut:'
-        args['title'] = '- add a new shortcut'
-        if args['short'] and args['long']:
-            # if both short and long name are provided, add it straight away
-            db[args['short']] = args['long']
-            return { 'action': 'redir', 'url': '/and/list' }
-        else:
-            # otherwise, present user with edit form
-            return { 'action': 'template', 'template_name': 'go_edit',
-                     'template_args': args }
-
-    elif (cmd == 'edit'):
-        if args['short']:
-            # edit a redirect
-            if db.has_key(args['short']):
-                args['message'] = 'Edit:'
-                args['long'] = db[args['short']]
-                args['title'] = '- edit a shortcut'
-            else:
-                args['message'] = 'Add a new shortcut:'
-                args['title'] = '- add a new shortcut'
-            return { 'action': 'template', 'template_name': 'go_edit',
-                     'template_args': args }
-        else:
-            # redirect to / if no name was supplied
-            return { 'action': 'redir', 'url': '/and/add' }
-
-    elif (cmd == 'del'):
-        # delete a redirect
-        if args['short'] and db.has_key(args['short']):
-            # if it exist, remove it and redirect to edit page, as a last
-            # chance to save this shortcut
-            args['message'] = 'Old shortcut removed, but you can always add it back here:'
-            args['long'] = db[args['short']]
-            args['title'] = '- last chance to save a shortcut!'
-            del db[args['short']]
-            return { 'action': 'template', 'template_name': 'go_edit',
-                     'template_args': args }
-        else:
-            url = '/and/add?' + urllib.urlencode({'short': args['short']})
-            return { 'action': 'redir', 'url': url }
-
-    elif (cmd == 'list'):
-        # show list of all redirects
-        shortcuts = db.items()
-        shortcuts.sort()
-        args = {
-          'list':  shortcuts,
-          'title': '- shortcuts list',
-        }
-        return { 'action': 'template', 'template_name': 'go_list',
-                 'template_args': args }
-
+@app.route('/add', name='add')
+def addShortcut(db):
+    (long, short) = (
+        request.params.get('long', ''),
+        request.params.get('short', '')
+    )
+    if long and short:
+        db[short] = long
+        redirect(app.get_url('list'))
     else:
-        # default endpoint
-        return { 'action': 'redir', 'url': '/and/list' }
+        kwargs = {
+            'message': 'Add a new shortcut:',
+            'title': '- add a new shortcut',
+        }
+        return template('go_edit', long=long, short=short, **kwargs)
+
+@app.route('/edit')
+def editShortcut(db):
+    short = request.params.get('short', '')
+    if short:
+        # edit a redirect
+        if db.has_key(short):
+            kwargs = {
+                'message': 'Edit:',
+                'title': '- edit a shortcut',
+                'short': short,
+                'long': db[short],
+            }
+        else:
+            kwargs = {
+                'message': 'Add a new shortcut:',
+                'title': '- add a new shortcut',
+            }
+        return template ('go_edit', **kwargs)
+    else:
+        # redirect to / if no name was supplied
+        redirect(app.get_url('add'))
+
+@app.route('/del')
+def deleteShortcut(db):
+    short = request.params.get('short', '')
+    if short and db.has_key(short):
+        # if it exist, remove it and redirect to edit page, as a last
+        # chance to save this shortcut
+        kwargs = {
+            'message': 'Old shortcut removed, but you can always add it back here:',
+            'title':  '- last chance to save a shortcut!',
+            'short': short,
+            'long': db[short],
+        }
+        del db[short]
+        return template('go_edit', **kwargs)
+    else:
+        url = app.get_url('add') + '?' + urllib.urlencode({'short': short})
+        redirect(url)
+
+
+if __name__ == "__main__":
+    import bottle
+    bottle.debug(True)
+    bottle.default_app().mount(app, '/and')
+    provisionDbs(None, None)
+    bottle.run()
