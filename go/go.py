@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+from pkg_resources import resource_filename
+
 import optparse, os, sys, threading, urllib
 import bottle
 
@@ -58,14 +60,16 @@ def static_file(filename):
     bottle.send_file(filename, root=app['data_dir'] + '/static/')
 
 
-def init(app):
+def initFromCmdLine():
+    app = {}
+    data_dir = resource_filename(__name__, '')
     # parse command line
     parser = optparse.OptionParser()
     option_list = [
         optparse.make_option(
             '-D', '--debug',
             action='store_true', dest='debug',
-            help='enable Bottle debug mode [off]',
+            help='enable Bottle debug mode [false]',
         ),
         optparse.make_option(
             '-n', '--nofork',
@@ -78,7 +82,7 @@ def init(app):
         ),
         optparse.make_option(
             '-a', '--data-dir',
-            dest='data_dir', help='prefix for data directories [/usr/share/go]',
+            dest='data_dir', help='prefix for data directories [%s]' % data_dir,
         ),
         optparse.make_option(
             '-H', '--host',
@@ -91,20 +95,13 @@ def init(app):
     ]
     parser.add_options(option_list)
     parser.set_defaults(
-        debug=False, nofork=False, db_dir='/tmp', data_dir='/usr/share/go',
+        debug=False, nofork=False,
         host='localhost', port=8080,
     )
 
     (options, args) = parser.parse_args()
     app.update(vars(options))
-
-    # open dbs
-    for name_of_db in ('and.db', 'hop.db', 'hop_old.db'):
-        app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db)
-
-    bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ]
-    app['timestamp_lock'] = threading.Lock()
-
+    return app
 
 def fork():
     try:
@@ -135,22 +132,29 @@ def daemonize():
 
 
 def run(app):
+    if not app.has_key('data_dir'):
+        app['data_dir'] = resource_filename(__name__, '')
+
+    if not app.has_key('db_dir'):
+        app['db_dir'] = '/tmp'
+
+    # open dbs
+    for name_of_db in ('and.db', 'hop.db', 'hop_old.db'):
+        app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db)
+
+    bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ]
+
     if app['debug']:
         bottle.debug(True)
     if (not app['nofork']):
         daemonize()
-    bottle.run(host=app['host'], port=app['port'])
-
+    bottle.run(host=app['host'], port=app['port'], server='auto')
 
 def go():
-    init(app)
-    run(app)
-
-app = {}
+    run(initFromCmdLine())
 
 if (__name__ == '__main__'):
-    # if called directly, launch in FastCGI wrapper
-    from flup.server.fcgi import WSGIServer
-    init(app)
-    application = bottle.default_app()
-    WSGIServer(application).run()
+    dummy_app = {
+        'debug': True, 'nofork': True, 'host': 'localhost', 'port': '8080'
+    }
+    run(dummy_app)

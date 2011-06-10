@@ -1,19 +1,25 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 from glob import glob
 
-setup(name='go',
-      description='URL redirector with a twist',
-      version='0.2',
-      author='Jakub Turski',
-      author_email='yacoob@gmail.com',
-      url='http://github.com/yacoob/go',
+setup(
+    name='go',
+    description='URL redirector with a twist',
+    version='0.23',
+    author='Jakub Turski',
+    author_email='yacoob@gmail.com',
+    url='http://github.com/yacoob/go',
 
-      requires=['bottle (>=0.8)'],
+    install_requires=['bottle>=0.9,<0.10'],
 
-      packages=['go'],
-      scripts=['go-runner.py'],
-      data_files=[('share/go/static', ['static/favicon.ico', 'static/main.css']),
-                  ('share/go/views', glob('views/*.tpl'))],
-     );
+    packages=['go'],
+    package_data={
+        'go': ['static/favicon.ico', 'static/main.css', 'views/*.tpl']
+    },
+    entry_points={
+        'console_scripts': [
+            'go-runner = go.go:go'
+        ],
+    }
+);
