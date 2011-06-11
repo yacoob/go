@@ -107,9 +107,9 @@ def run(app):
     """Setup some reasonable defaults (even if running as dummy), run application"""
     if not app.has_key('servertype'):
         app['servertype'] = 'auto'
-    if not app.has_key('data_dir'):
+    if not app.get('data_dir'):
         app['data_dir'] = resource_filename(__name__, '')
-    if not app.has_key('db_dir'):
+    if not app.get('db_dir'):
         app['db_dir'] = '/tmp'
 
     app['static_dir'] = app['data_dir'] + '/static/'
