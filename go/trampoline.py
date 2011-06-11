@@ -3,7 +3,7 @@
 # pylint: disable-msg=W0142
 
 from bottle import Bottle, request, template, redirect, response
-from sqldict_plugin import sqldictPlugin
+from dict_plugin import dictPlugin
 from urlparse import urlunsplit
 import threading
 import time
@@ -14,8 +14,8 @@ app.timestamp_lock = threading.Lock()
 
 
 def provisionDbs(db, db_old):
-    app.install(sqldictPlugin(keyword='db', filename=db))
-    app.install(sqldictPlugin(keyword='db_old', filename=db_old))
+    app.install(dictPlugin(keyword='db', filename=db))
+    app.install(dictPlugin(keyword='db_old', filename=db_old))
 
 def describeUrls(db, json=False):
     entries = db.items()

@@ -1,27 +1,28 @@
 #!/usr/bin/env python
 # coding: utf-8
+# pylint: disable-msg=W0142
 
 from bottle import Bottle, request, template, redirect
-from sqldict_plugin import sqldictPlugin
+from dict_plugin import dictPlugin
 import urllib
 
 
 app = Bottle()
 
 
-def provisionDbs(db, db_old):
-    app.install(sqldictPlugin(keyword='db', filename=db))
+def provisionDbs(db):
+    app.install(dictPlugin(keyword='db', filename=db))
 
 @app.route('/')
 @app.route('/list', name='list')
 def listShortcuts(db):
-        shortcuts = db.items()
-        shortcuts.sort()
-        kwargs = {
-            'list':  shortcuts,
-            'title': '- shortcuts list',
-        }
-        return template('go_list', **kwargs)
+    shortcuts = db.items()
+    shortcuts.sort()
+    kwargs = {
+        'list':  shortcuts,
+        'title': '- shortcuts list',
+    }
+    return template('go_list', **kwargs)
 
 @app.route('/:shortcut#[^&?/*]+#')
 def handleShortcut(shortcut, db):
@@ -35,19 +36,19 @@ def handleShortcut(shortcut, db):
 
 @app.route('/add', name='add')
 def addShortcut(db):
-    (long, short) = (
+    (url, shortcut) = (
         request.params.get('long', ''),
         request.params.get('short', '')
     )
-    if long and short:
-        db[short] = long
+    if url and shortcut:
+        db[shortcut] = url
         redirect(app.get_url('list'))
     else:
         kwargs = {
             'message': 'Add a new shortcut:',
             'title': '- add a new shortcut',
         }
-        return template('go_edit', long=long, short=short, **kwargs)
+        return template('go_edit', long=url, short=shortcut, **kwargs)
 
 @app.route('/edit')
 def editShortcut(db):
@@ -65,6 +66,8 @@ def editShortcut(db):
             kwargs = {
                 'message': 'Add a new shortcut:',
                 'title': '- add a new shortcut',
+                'short': short,
+                'long': '',
             }
         return template ('go_edit', **kwargs)
     else:
@@ -94,5 +97,5 @@ if __name__ == "__main__":
     import bottle
     bottle.debug(True)
     bottle.default_app().mount(app, '/and')
-    provisionDbs(None, None)
+    provisionDbs(None)
     bottle.run()

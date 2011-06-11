@@ -1,5 +1,5 @@
 '''
-Bottle plugin for sqldict. Styled after official sqlite plugin.
+Bottle plugin for dict injection. Styled after official sqlite plugin. Best used with sqldict.
 
 @author: yacoob@gmail.com
 '''
@@ -7,22 +7,23 @@ Bottle plugin for sqldict. Styled after official sqlite plugin.
 import sqldict
 import inspect
 
-class sqldictPlugin(object):
+class dictPlugin(object):
     '''
-    This plugin passes an sqldict into bottle callback that takes argument named after keyword. 
+    This plugin passes a dict into bottle callback. 
     '''
-
-
-    def __init__(self, keyword='db', table=None, filename=None):
-        self.dict = sqldict.sqldict(table, filename)
+    def __init__(self, keyword='db', dictionary=None, table=None, filename=None):
+        if dictionary:
+            self.dict = dictionary.copy()
+        else:
+            self.dict = sqldict.sqldict(table, filename)
         self.keyword = keyword
 
 
     def setup(self, app):
         for plugin in app.plugins:
-            if not isinstance(plugin, sqldictPlugin): continue
+            if not isinstance(plugin, dictPlugin): continue
             if plugin.keyword == self.keyword:
-                raise RuntimeError ("Found another sqldict plugin with same keyword.")
+                raise RuntimeError ("Found another dictPlugin with same keyword.")
 
     def apply(self, callback, context):
         args = inspect.getargspec(context['callback'])[0]

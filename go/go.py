@@ -2,63 +2,36 @@
 # coding: utf-8
 
 from pkg_resources import resource_filename
-
-import optparse, os, sys, threading, urllib
 import bottle
-
+from dict_plugin import dictPlugin
+import optparse
+import os
 import redirector
-import sqldict
+import sys
 import trampoline
+import urllib
 
 
-def handle_response(r):
-    if not r.has_key('action'):
-        raise bottle.HTTPError
-    w = r['action']
-    if (w == 'redir'):
-        return bottle.redirect(r['url'])
-    elif (w == 'template'):
-        bottle.response.content_type = r['content_type'] if r.has_key('content_type') else 'text/html'
-        return bottle.template(r['template_name'], **r['template_args'])
+root = bottle.Bottle()
 
-
-@bottle.route('/')
+@root.route('/')
 def index():
     bottle.redirect('/and/list')
 
-
-@bottle.route('/:shortcut#[^&?/*]+#*')
+@root.route('/:shortcut#[^&?/*]+#*')
 def go_edit_that(shortcut):
-    # /foo* = edit shortcut 'foo'
-    url = '/and/edit?' + urllib.urlencode({'short': shortcut})
+    url = '/and/edit' + '?' + urllib.urlencode({'short': shortcut})
     bottle.redirect(url)
 
-
-@bottle.route('/:shortcut#[^&?/*]+#')
+@root.route('/:shortcut#[^&?/*]+#')
 def go_there(shortcut):
-    return handle_response(redirector.handle_shortcut(app, shortcut))
+    # FIXME: This is suboptimal. It should be possible to route request 
+    # for handling to another application.
+    bottle.redirect('/and/' + shortcut)
 
-
-@bottle.route('/and/:cmd#.*#')
-def go_command(cmd):
-    params = { 'short': bottle.request.GET.get('short', ''),
-               'long':  bottle.request.GET.get('long', '') }
-    return handle_response(redirector.handle_command(app, cmd, params))
-
-
-@bottle.route('/hop/:cmd#.*#')
-def hop_command(cmd):
-    params = { 'url': bottle.request.GET.get('url', ''),
-               'id':  bottle.request.GET.get('id', ''),
-               'json': bottle.request.GET.get('json', ''),
-               'requested_url': bottle.request.url}
-    return handle_response(trampoline.handle_command(app, cmd, params))
-
-
-@bottle.route('/static/:filename')
-def static_file(filename):
-    bottle.send_file(filename, root=app['data_dir'] + '/static/')
-
+@root.route('/static/:filename')
+def static_file(filename, app):
+    bottle.send_file(filename, root=app['static_dir'])
 
 def initFromCmdLine():
     app = {}
@@ -99,7 +72,7 @@ def initFromCmdLine():
         host='localhost', port=8080,
     )
 
-    (options, args) = parser.parse_args()
+    options = parser.parse_args()[0]
     app.update(vars(options))
     return app
 
@@ -130,30 +103,39 @@ def daemonize():
     os.dup2(fd, 2)
     os.close(fd)
 
-
 def run(app):
+    """Setup some reasonable defaults (even if running as dummy), run application"""
     if not app.has_key('data_dir'):
         app['data_dir'] = resource_filename(__name__, '')
-
     if not app.has_key('db_dir'):
         app['db_dir'] = '/tmp'
 
-    # open dbs
-    for name_of_db in ('and.db', 'hop.db', 'hop_old.db'):
-        app[name_of_db] = sqldict.sqldict(filename=app['db_dir'] + '/' + name_of_db)
-
+    app['static_dir'] = app['data_dir'] + '/static/'
     bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ]
 
     if app['debug']:
         bottle.debug(True)
     if (not app['nofork']):
         daemonize()
-    bottle.run(host=app['host'], port=app['port'], server='auto')
+
+
+    trampoline.provisionDbs(app['db_dir'] + '/hop.db', app['db_dir'] + '/hop_old.db')
+    redirector.provisionDbs(app['db_dir'] + '/and.db')
+
+    root.mount(trampoline.app, '/hop')
+    root.mount(redirector.app, '/and')
+
+    root.install(dictPlugin(keyword='app', dictionary=app))
+
+    bottle.run(root, host=app['host'], port=app['port'], server='auto')
 
 def go():
+    """Referenced by setup.py, main point of entry for "production" use."""
     run(initFromCmdLine())
 
+
 if (__name__ == '__main__'):
+    """Setup full application on localhost, in debug mode, without forking."""
     dummy_app = {
         'debug': True, 'nofork': True, 'host': 'localhost', 'port': '8080'
     }
