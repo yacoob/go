@@ -105,6 +105,8 @@ def daemonize():
 
 def run(app):
     """Setup some reasonable defaults (even if running as dummy), run application"""
+    if not app.has_key('servertype'):
+        app['servertype'] = 'auto'
     if not app.has_key('data_dir'):
         app['data_dir'] = resource_filename(__name__, '')
     if not app.has_key('db_dir'):
@@ -127,7 +129,7 @@ def run(app):
 
     root.install(dictPlugin(keyword='app', dictionary=app))
 
-    bottle.run(root, host=app['host'], port=app['port'], server='auto')
+    bottle.run(root, host=app['host'], port=app['port'], server=app['servertype'])
 
 def go():
     """Referenced by setup.py, main point of entry for "production" use."""
@@ -135,8 +137,9 @@ def go():
 
 
 if (__name__ == '__main__'):
-    """Setup full application on localhost, in debug mode, without forking."""
+    # Setup full application on localhost, in debug mode, without forking.
     dummy_app = {
-        'debug': True, 'nofork': True, 'host': 'localhost', 'port': '8080'
+        'debug': True, 'nofork': True, 'host': 'localhost', 'port': '8080',
+        'servertype': 'wsgiref',
     }
     run(dummy_app)
