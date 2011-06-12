@@ -1,10 +1,8 @@
 # This is an url redirector.
->With a little twist, packaged into a [bottle](http://bottle.paws.de/).
+>With a little twist, packaged into a [bottle](http://bottlepy.org).
 
 ## In order to run:
 * get source
-* `easy_install -U bottle`
-* `python setup.py build`
 * `python setup.py install`
 
 It's not on [PyPI](http://pypi.python.org/pypi). Yet :)
@@ -42,6 +40,8 @@ to stack from the first one, and you pop from the stack on the other one.
 * `/hop/pop` - go to last pushed URL;
 * `/hop/push` - push a new URL (via `?url=...` parameter).
 * `/hop/rss` - feed of new URLs
+
+`/hop/r/` contains rudimentary REST interface.
 
 ## Extra bits
 `chrome` directory contains simple Chrome addon, that allows you to
