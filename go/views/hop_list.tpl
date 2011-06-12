@@ -12,13 +12,13 @@
 <table>
 %   oldday = ''
 %   for row in stack:
-%     day = row[0][0:3]
+%     day = row['day']
 %     if day != oldday:
 <tr class="topborder">
-<td class="timestamp" colspan=2>{{row[0][:-7]}}</td>
+<td class="timestamp" colspan=2>{{day}}</td>
 </tr>
 %     end
-<tr><td class="timestamp">{{row[0][-5:]}}</td><td class="url"><a href="{{pop_url}}?id={{row[1]}}">{{row[2]}}</a></td></tr>
+<tr><td class="timestamp">{{row['time']}}</td><td class="url"><a href="{{row['pop_url']}}">{{row['url']}}</a></td></tr>
 %     oldday = day
 %   end
 </table>
@@ -33,14 +33,14 @@
 <table>
 %   oldday = ''
 %   for row in viewed:
-%     day = row[0][0:3]
+%     day = row['day']
 %     if day != oldday:
 <tr class="topborder">
-<td class="timestamp" colspan=2>{{row[0][:-7]}}</td>
+<td class="timestamp" colspan=2>{{day}}</td>
 </tr>
 %     end
 <tr>
-<td class="timestamp">{{row[0][-5:]}}</td><td class="url"><a href="{{row[2]}}">{{row[2]}}</a></td>
+<td class="timestamp">{{row['time']}}</td><td class="url"><a href="{{row['url']}}">{{row['url']}}</a></td>
 </tr>
 %     oldday = day
 %   end

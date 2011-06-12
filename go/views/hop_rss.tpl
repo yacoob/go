@@ -6,10 +6,11 @@
     <pubDate>{{timestamp}}</pubDate>
     <lastBuildDate>{{timestamp}}</lastBuildDate>
 
+% from email.utils import formatdate
 % for row in stack:
     <item>
         <title>{{row['url']}}</title>
-        <link>{{pop_url}}{{row['id']}}</link>
+        <link>{{row['pop_url']}}</link>
         <description>{{row['url']}}</description>
         <pubDate>{{row['date']}}</pubDate>
     </item>

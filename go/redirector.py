@@ -14,6 +14,9 @@ def provisionDbs(db):
     app.install(dictPlugin(keyword='db', filename=db))
 
 @app.route('/')
+def goToList():
+    redirect(app.get_url('list'))
+
 @app.route('/list', name='list')
 def listShortcuts(db):
     shortcuts = db.items()
