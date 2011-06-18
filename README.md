@@ -2,7 +2,7 @@
 >With a little twist, packaged into a [bottle](http://bottlepy.org).
 
 ## In order to run:
-* get source
+* `cd python`
 * `python setup.py install`
 
 It's not on [PyPI](http://pypi.python.org/pypi). Yet :)
@@ -41,11 +41,13 @@ to stack from the first one, and you pop from the stack on the other one.
 * `/hop/push` - push a new URL (via `?url=...` parameter).
 * `/hop/rss` - feed of new URLs
 
-`/hop/r/` contains rudimentary REST interface.
+`/hop/r/` contains rudimentary REST interface for Trampoline module.
 
 ## Extra bits
+`android` directory contains simple Android client for Trampoline module.
+
 `chrome` directory contains simple Chrome addon, that allows you to
-push/pop/interact with Trampolina part of go without fiddling with URLs on your
+push/pop/interact with Trampoline part of go without fiddling with URLs on your
 own. Remember to configure it properly before using. For the time being, it's
 not available in Chrome Extension Gallery, and you have to install it by hand.
 
