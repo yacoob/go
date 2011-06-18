@@ -3,6 +3,7 @@
 # pylint: disable-msg=W0142
 
 from bottle import abort, Bottle, request, template, redirect, response
+from collections import Iterable
 from datetime import datetime
 from dict_plugin import dictPlugin
 from email.utils import formatdate
@@ -19,9 +20,9 @@ def provisionDbs(db, db_old):
     app.install(dictPlugin(keyword='db', filename=db))
     app.install(dictPlugin(keyword='db_old', filename=db_old))
 
-def describeUrl(db, url_id, base_url, rfc822=False, pop_url=True):
+def _describeUrl(db, base_url, url_id, rfc822=False, pop_url=True):
     if not db.has_key(url_id):
-        return None
+        return (None, None)
     date = datetime.fromtimestamp(float(url_id))
     description = {
             'date': formatdate(float(url_id)) if rfc822 else date.ctime(),
@@ -34,14 +35,17 @@ def describeUrl(db, url_id, base_url, rfc822=False, pop_url=True):
         description.update({
             'pop_url': base_url + app.get_url('pop') + '?id=' + url_id
         })
-    return description
+    return (url_id, description)
 
-def describeUrls(db, base_url, rfc822=False, pop_url=True):
-    urls = sorted(db.keys(), reverse=True)
-    return [
-        describeUrl(db, u, base_url, rfc822, pop_url)
-        for u in urls
-    ]
+def describeUrls(db, base_url, urls=None, rfc822=False, pop_url=True):
+    if urls == None:
+        urls = db
+    elif type(urls) == str or not isinstance(urls, Iterable):
+        urls = (urls,)
+    described = [_describeUrl(db, base_url, u, rfc822, pop_url)
+                 for u in urls]
+    described = [x for x in described if x[1]]
+    return dict(described)
 
 @app.route('/push')
 def pushUrl(db):
@@ -110,16 +114,30 @@ def restShowList(list_id, db, db_old):
         abort(404, 'No such list.')
 
 @app.route('/r/:list_id#(?:stack|viewed)#/:url_id#[0-9.]+#')
-def restShowListEntry(list_id, url_id, db, db_old):
+@app.route('/r/:list_id#(?:stack|viewed)#/>:start#[0-9.]+#')
+def restShowListEntries(list_id, db, db_old, url_id=None, start=None):
     base_url = urlunsplit(request.urlparts[0:2] + ('', '', ''))
     if list_id == 'stack':
-        description = describeUrl(db, url_id, base_url)
+        pop_url = True
+        source = db
     elif list_id == 'viewed':
-        description = describeUrl(db_old, url_id, base_url, pop_url=False)
+        pop_url = False
+        source = db_old
     else:
-        abort(404, 'No such list or id.')
+        assert True, "restShowListEntries got unknown list name."
+    if start:
+        urls = sorted(source.keys())
+        try:
+            urls = urls[urls.index(start) + 1:]
+        except ValueError:
+            abort(404, "No such id(s).")
+    elif url_id:
+        urls = [url_id]
+    else:
+        assert True, "I got confused with your request: %s" % request.url()
+    description = describeUrls(source, base_url, urls, pop_url)
     if not description:
-        abort(404, 'No such list or id.')
+        abort(404, 'No such id(s).')
     else:
         return description
 

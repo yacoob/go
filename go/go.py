@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
+# pylint: disable-msg=E0611
 
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename #@UnresolvedImport
 import bottle
 from dict_plugin import dictPlugin
 import optparse
@@ -27,6 +28,7 @@ def go_edit_that(shortcut):
 def go_there(shortcut):
     # FIXME: This is suboptimal. It should be possible to route request 
     # for handling to another application.
+    # https://github.com/defnull/bottle/issues/168
     bottle.redirect('/and/' + shortcut)
 
 @root.route('/static/:filename')

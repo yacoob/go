@@ -11,14 +11,15 @@
 <h1>New URLs</h1>
 <table>
 %   oldday = ''
-%   for row in stack:
-%     day = row['day']
+%   for id in sorted(stack.keys(), reverse=True):
+%     url = stack[id]
+%     day = url['day']
 %     if day != oldday:
 <tr class="topborder">
 <td class="timestamp" colspan=2>{{day}}</td>
 </tr>
 %     end
-<tr><td class="timestamp">{{row['time']}}</td><td class="url"><a href="{{row['pop_url']}}">{{row['url']}}</a></td></tr>
+<tr><td class="timestamp">{{url['time']}}</td><td class="url"><a href="{{url['pop_url']}}">{{url['url']}}</a></td></tr>
 %     oldday = day
 %   end
 </table>
@@ -32,15 +33,16 @@
 <h1>Old URLs</h1>
 <table>
 %   oldday = ''
-%   for row in viewed:
-%     day = row['day']
+%   for id in sorted(viewed.keys(), reverse=True):
+%     url = viewed[id]
+%     day = url['day']
 %     if day != oldday:
 <tr class="topborder">
 <td class="timestamp" colspan=2>{{day}}</td>
 </tr>
 %     end
 <tr>
-<td class="timestamp">{{row['time']}}</td><td class="url"><a href="{{row['url']}}">{{row['url']}}</a></td>
+<td class="timestamp">{{url['time']}}</td><td class="url"><a href="{{url['url']}}">{{url['url']}}</a></td>
 </tr>
 %     oldday = day
 %   end

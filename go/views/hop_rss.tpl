@@ -6,8 +6,8 @@
     <pubDate>{{timestamp}}</pubDate>
     <lastBuildDate>{{timestamp}}</lastBuildDate>
 
-% from email.utils import formatdate
-% for row in stack:
+% for id in sorted(stack.keys(), reverse=True):
+% row = stack[id]
     <item>
         <title>{{row['url']}}</title>
         <link>{{row['pop_url']}}</link>
