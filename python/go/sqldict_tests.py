@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os, sqlite3, unittest
+import shutil
 import sqldict
+import sqlite3
+import tempfile
+import unittest
 
 
 class SqlDictTest(unittest.TestCase):
@@ -53,7 +56,9 @@ class BasicUsageTestCase(SqlDictTest):
         self.assertEquals(b[index_one], 23)
 
     def testNamedTable(self):
-        b = sqldict.sqldict('blam')
+        tmpdir = tempfile.mkdtemp()
+        db_file = tmpdir + '/bla'
+        b = sqldict.sqldict(filename=db_file, table='blam')
         c = sqldict.sqldict(filename=b.filename)
         # test whether b is using specified table name
         b[1] = 2
@@ -64,21 +69,23 @@ class BasicUsageTestCase(SqlDictTest):
         # test whether b and c are using different tables
         c[1] = 3
         self.assertNotEqual(b[1], c[1])
+        shutil.rmtree(tmpdir)
 
 
     def testNamedFile(self):
-        b = sqldict.sqldict(filename='/tmp/bla')
-        c = sqldict.sqldict(filename='/tmp/bla')
+        tmpdir = tempfile.mkdtemp()
+        db_file = tmpdir + '/bla'
+        b = sqldict.sqldict(filename=db_file)
+        c = sqldict.sqldict(filename=db_file)
         b[1] = 2
         # test whether b is using specified file name
-        db = sqlite3.connect('/tmp/bla')
-        os.unlink('/tmp/bla')
+        db = sqlite3.connect(db_file)
         cursor = db.execute('select * from dict')
         rows = cursor.fetchall()
         self.assertNotEqual(len(rows), 0)
         # test whether b and c are using the same file and table
         self.assertEquals(c[1], 2)
-
+        shutil.rmtree(tmpdir)
 
 if __name__ == '__main__':
     unittest.main()

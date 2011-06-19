@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
+# pylint: disable-msg=E0611
 
-import hashlib, sqlite3, threading
-import cPickle as pickle
+from hashlib import sha1
 import UserDict
+import cPickle as pickle
+import sqlite3
+import threading
 
 
 class sqldict(UserDict.DictMixin):
@@ -24,8 +27,8 @@ class sqldict(UserDict.DictMixin):
         self.table = table
 
 
-    def __pickle(self, object):
-        return pickle.dumps(object)
+    def __pickle(self, obj):
+        return pickle.dumps(obj)
 
 
     def __unpickle(self, string):
@@ -33,7 +36,7 @@ class sqldict(UserDict.DictMixin):
 
 
     def __hash_key(self, key):
-        return hashlib.sha1(self.__pickle(key)).hexdigest()
+        return sha1(self.__pickle(key)).hexdigest()
 
 
     def __execute(self, sqlstring):
@@ -112,7 +115,7 @@ class sqldict(UserDict.DictMixin):
             { 'tablename': self.table },
         )
         rows = cursor.fetchall()
-        keys = map(lambda i: self.__unpickle(i[0]), rows)
+        keys = [self.__unpickle(i[0]) for i in rows]
         return keys
 
     # __contains__
