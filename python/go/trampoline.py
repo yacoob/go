@@ -113,9 +113,10 @@ def restShowList(list_id, db, db_old):
     else:
         abort(404, 'No such list.')
 
+@app.route('/r/:list_id#(?:stack|viewed)#/:magic_star#\*#')
 @app.route('/r/:list_id#(?:stack|viewed)#/:url_id#[0-9.]+#')
 @app.route('/r/:list_id#(?:stack|viewed)#/>:start#[0-9.]+#')
-def restShowListEntries(list_id, db, db_old, url_id=None, start=None):
+def restShowListEntries(list_id, db, db_old, magic_star=None, url_id=None, start=None):
     base_url = urlunsplit(request.urlparts[0:2] + ('', '', ''))
     if list_id == 'stack':
         pop_url = True
@@ -133,6 +134,8 @@ def restShowListEntries(list_id, db, db_old, url_id=None, start=None):
             abort(404, "No such id(s).")
     elif url_id:
         urls = [url_id]
+    elif magic_star:
+        urls = None
     else:
         assert True, "I got confused with your request: %s" % request.url()
     description = describeUrls(source, base_url, urls, pop_url=pop_url)
