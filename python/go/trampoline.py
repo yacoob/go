@@ -42,7 +42,7 @@ def describeUrls(db, base_url, urls=None, rfc822=False, pop_url=True):
         urls = db
     elif type(urls) == str or not isinstance(urls, Iterable):
         urls = (urls,)
-    described = [_describeUrl(db, base_url, u, rfc822, pop_url)
+    described = [_describeUrl(db, base_url, u, rfc822=rfc822, pop_url=pop_url)
                  for u in urls]
     described = [x for x in described if x[1]]
     return dict(described)
@@ -135,7 +135,7 @@ def restShowListEntries(list_id, db, db_old, url_id=None, start=None):
         urls = [url_id]
     else:
         assert True, "I got confused with your request: %s" % request.url()
-    description = describeUrls(source, base_url, urls, pop_url)
+    description = describeUrls(source, base_url, urls, pop_url=pop_url)
     if not description:
         abort(404, 'No such id(s).')
     else:
