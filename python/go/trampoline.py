@@ -3,6 +3,7 @@
 # pylint: disable-msg=W0142
 
 from bottle import abort, Bottle, request, template, redirect, response
+from bisect import bisect_right
 from collections import Iterable
 from datetime import datetime
 from dict_plugin import dictPlugin
@@ -128,10 +129,8 @@ def restShowListEntries(list_id, db, db_old, magic_star=None, url_id=None, start
         assert True, "restShowListEntries got unknown list name."
     if start:
         urls = sorted(source.keys())
-        try:
-            urls = urls[urls.index(start) + 1:]
-        except ValueError:
-            abort(404, "No such id(s).")
+        position = bisect_right(urls, start)
+        urls = urls[position:]
     elif url_id:
         urls = [url_id]
     elif magic_star:
