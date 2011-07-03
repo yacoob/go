@@ -13,6 +13,7 @@ import android.widget.TextView;
 /**
  * {@link ArrayAdapter} containing {@link UrlEntry} objects.
  */
+@Deprecated
 class HopListAdapter extends ArrayAdapter<UrlEntry> {
 
     /**

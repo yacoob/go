@@ -1,6 +1,8 @@
 package org.yacoob.trampoline;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import org.json.JSONException;
@@ -10,6 +12,7 @@ import org.json.JSONObject;
  * This class is used to represent a single entry on list of URLs presented by
  * Trampoline. You'll need a {@link JSONObject} to create {@link UrlEntry}.
  */
+@Deprecated
 public final class UrlEntry implements Serializable {
 
     /** Version identifier for Serializable. */
@@ -64,7 +67,7 @@ public final class UrlEntry implements Serializable {
             this.url = o.getString("url");
             this.displayUrl = this.url;
             this.id = o.getString("id");
-        } catch (JSONException e) {
+        } catch (final JSONException e) {
             Hop.warn("JSON object '" + o.toString()
                     + "' is unsuitable for conversion to UrlEntry: "
                     + e.getMessage());
@@ -197,6 +200,7 @@ public final class UrlEntry implements Serializable {
      * @see java.lang.Object#toString()
      * @return {@link String} representation of this {@link UrlEntry} object.
      */
+    @Override
     public String toString() {
         return this.displayUrl + '\n' + this.date;
     }

@@ -1,13 +1,10 @@
 package org.yacoob.trampoline;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.List;
+import org.yacoob.trampoline.DBHelper.DbHelperException;
 
 import android.app.ListActivity;
-import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteCursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -20,22 +17,21 @@ public class HopListActivity extends ListActivity {
     private Hop app;
     private boolean is_offline = false;
     private TaskRefreshList refresh_task;
+    private DBHelper dbhelper;
+    private SQLiteCursor urls;
 
-    @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         app = (Hop) getApplication();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        dbhelper = new DBHelper(this);
         try {
-            ObjectInputStream ois = new ObjectInputStream(
-                    openFileInput(Hop.CACHE_FILE));
-            setUrlList((List<UrlEntry>) ois.readObject());
-            ois.close();
-        } catch (Exception e) {
-            Hop.warn("Problems during deserialization of cache: "
-                    + e.getMessage());
+            urls = dbhelper.getWriteableCursor("stack");
+        } catch (final DbHelperException e) {
+            throw new RuntimeException("Can't open database.");
         }
+        setListAdapter(new HopSQLAdapter(this, urls));
+        setContentView(R.layout.main);
         // Recover background task, if there's one.
         refresh_task = (TaskRefreshList) getLastNonConfigurationInstance();
         if (refresh_task != null) {
@@ -59,27 +55,21 @@ public class HopListActivity extends ListActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        maybeSerializeCache();
-    }
-
-    @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        UrlEntry item = (UrlEntry) l.getItemAtPosition(position);
+        final UrlEntry item = (UrlEntry) l.getItemAtPosition(position);
         // We're cheating here: if we know that Trampoline is not available,
         // there's no point in trying to open an URL pointing to it. Instead,
         // use target URL. It won't be popped from stack (it is located on
         // Trampoline itself after all), but at least user will see the URL she
         // wants and will be happy.
-        String url = is_offline == true ? item.getDisplayUrl() : item.getUrl();
+        final String url = is_offline == true ? item.getDisplayUrl() : item.getUrl();
         app.showInfo(url);
         this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater mi = getMenuInflater();
+        final MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.main, menu);
         return true;
     }
@@ -97,53 +87,31 @@ public class HopListActivity extends ListActivity {
             return super.onOptionsItemSelected(item);
         }
     }
-    
-
-    private void maybeSerializeCache() {
-        // TODO: Make this smarter and do NOT dump file every time we're called.
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(openFileOutput(
-                    Hop.CACHE_FILE, Context.MODE_PRIVATE));
-            oos.writeObject(((HopListAdapter) getListAdapter()).getUrlList());
-            oos.close();
-        } catch (IOException e) {
-            Hop.warn("Problems during serialization of cache: "
-                    + e.getMessage());
-        }
-    }
 
     private void refreshUrlList() {
         if (refresh_task == null) {
-            refresh_task = new TaskRefreshList(this);
-            refresh_task.execute(Hop.LISTURL);
+            refresh_task = new TaskRefreshList(this, "stack", dbhelper);
+            refresh_task.execute();
         }
     }
 
-    void refreshDone(List<UrlEntry> list) {
-        if (list != null) {
-            setOnline();
-            setUrlList(list);
-        } else {
+    void refreshDone(Boolean gotNewData, Exception networkProblems) {
+        if (networkProblems != null) {
             setOffline();
             app.showComplaint(getString(R.string.fetch_failed));
+        } else {
+            setOnline();
+        }
+        if (gotNewData) {
+            urls.requery();
         }
         refresh_task = null;
-    }
-
-    private void setUrlList(List<UrlEntry> l) {
-        /*
-         * XXX: ArrayAdapter<T>.addAll got added in r11. Without that method
-         * we'd need to iterate through new_url_list, and call add() one by one.
-         * Unsmurfy.
-         */
-        setListAdapter(new HopListAdapter(this, l));
     }
 
     private void setOffline() {
         setTitle(getString(R.string.app_name) + " "
                 + getString(R.string.offline_indicator));
         is_offline = true;
-        maybeSerializeCache();
     }
 
     private void setOnline() {

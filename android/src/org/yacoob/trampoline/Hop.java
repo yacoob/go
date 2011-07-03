@@ -16,14 +16,14 @@ public class Hop extends Application {
     static final String CACHE_FILE = "url_cache";
 
     /** URL of JSON endpoint on Trampoline server. */
-    static final String LISTURL = BASEURL + "/list?json=1";
+    static final String RESTURL = BASEURL + "/r";
 
     /** Tag for Android logging. */
     static final String LOGTAG = "Trampoline";
-    
+
     /** Time (ms) to show complaint {@link Toast} for. */
     private static final int COMPLAINT_TIME = 3000;
-    
+
     /** Time (ms) to show info {@link Toast} for. */
     private static final int INFO_TIME = 1500;
 
@@ -46,7 +46,7 @@ public class Hop extends Application {
     static void warn(final String msg) {
         Log.w(LOGTAG, msg);
     }
-    
+
     private void showToast(String msg, int time) {
         Toast.makeText(getApplicationContext(), msg, time).show();
     }
