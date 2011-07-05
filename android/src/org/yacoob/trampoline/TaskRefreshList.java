@@ -1,12 +1,13 @@
 package org.yacoob.trampoline;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpResponseException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,10 +47,11 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
      * @param activity
      *            Activity launching this task.
      */
-    TaskRefreshList(final HopListActivity activity, String listName, DBHelper dbhelper) {
-        this.listName = listName;
+    TaskRefreshList(final HopListActivity activity, final String list,
+            final DBHelper databaseHelper) {
+        this.listName = list;
         this.url = Hop.RESTURL + "/" + this.listName;
-        this.dbhelper = dbhelper;
+        this.dbhelper = databaseHelper;
         attach(activity);
     }
 
@@ -73,7 +75,7 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
     }
 
     @SuppressWarnings("unchecked")
-    protected <T> Set<T> extractFromJson(JSONObject o, String arrayName) {
+    protected <T> Set<T> extractFromJson(final JSONObject o, final String arrayName) {
         if (o == null) {
             return null;
         } else {
@@ -81,7 +83,7 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
             try {
                 if (arrayName != null) {
                     final JSONArray source = o.getJSONArray(arrayName);
-                    for (int i=0; i<source.length(); i++) {
+                    for (int i = 0; i < source.length(); i++) {
                         set.add((T) source.get(i));
                     }
                 } else {
@@ -99,6 +101,7 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
             return set;
         }
     }
+
     /*
      * (non-Javadoc)
      * 
@@ -108,7 +111,7 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
     protected Boolean doInBackground(final String... params) {
         Boolean dataChanged = false;
 
-        // Fetch all URLs newest than our latest item.
+        // Check for URLs newer than our latest item.
         try {
             String fetchUrl = null;
             if (dbhelper.getUrlCount(listName) == 0) {
@@ -119,42 +122,56 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
             }
 
             JSONObject newUrlsJson = null;
+            Boolean newUrlsPresent = true;
             try {
                 newUrlsJson = UrlFetch.urlToJSONObject(fetchUrl);
-            } catch (final ClientProtocolException e) {
-                // No new URLs
-                return false;
+            } catch (final HttpResponseException e) {
+                // No new URLs?
+                if (e.getStatusCode() == 404) {
+                    newUrlsPresent = false;
+                } else {
+                    throw (e);
+                }
             }
 
-            // Extract JSONObjects from newUrlsJson, add all of them to db
-            final Set<JSONObject> newUrls = extractFromJson(newUrlsJson, null);
-            dataChanged |= dbhelper.insertJsonObjects(listName, newUrls);
+            if (newUrlsPresent) {
+                // Extract JSONObjects from newUrlsJson, add all of them to db
+                final Set<JSONObject> newUrls = extractFromJson(newUrlsJson,
+                        null);
+                dataChanged |= dbhelper.insertJsonObjects(listName, newUrls);
+            }
 
-            // Fetch list of all remote URL ids.
+            // Fetch list of all remote URL ids, compare to local one. This will
+            // account for any holes Android client might have. Usually this
+            // doesn't happen, but we might end up in half-updated state after a
+            // crash.
             final JSONObject remoteUrlsJson = UrlFetch.urlToJSONObject(url);
-            final Set<String> remoteIds = extractFromJson(remoteUrlsJson, listName);
+            final Set<String> remoteIds = extractFromJson(remoteUrlsJson,
+                    listName);
             final Set<String> localIds = dbhelper.getUrlIds(listName);
 
             // Drop local-remote from db.
             final Set<String> deletedIds = new HashSet<String>(localIds);
             deletedIds.removeAll(remoteIds);
-            dataChanged |= dbhelper.removeIds(listName, deletedIds);
+            if (deletedIds.size() != 0) {
+                dataChanged |= dbhelper.removeIds(listName, deletedIds);
+            }
 
             // Iterate over remote-local, fetch one by one.
             final Set<String> newSingleIds = new HashSet<String>(remoteIds);
             newSingleIds.removeAll(localIds);
-            final Iterator<String> it = newSingleIds.iterator();
-            final Set<JSONObject> newObjects = new HashSet<JSONObject>();
-            while (it.hasNext()) {
-                final String id = it.next();
-                final JSONObject newUrlData = UrlFetch.urlToJSONObject(url + "/" + id);
-                if (newUrlData != null) {
-                    newObjects.add(newUrlData);
+            if (newSingleIds.size() != 0) {
+                final Set<JSONObject> newObjects = new HashSet<JSONObject>();
+                for (final String id : newSingleIds) {
+                    final JSONObject newUrlData = UrlFetch.urlToJSONObject(url
+                            + "/" + id);
+                    if (newUrlData != null) {
+                        newObjects.add(newUrlData);
+                    }
                 }
+                dataChanged |= dbhelper.insertJsonObjects(listName, newObjects);
             }
-            dataChanged |= dbhelper.insertJsonObjects(listName, newObjects);
-        } catch (final ClientProtocolException e) {
-            Hop.warn("Network problems while fetching data from Trampoline: " + e.getMessage());
+        } catch (final IOException e) {
             netProblems = e;
         } catch (final DbHelperException e) {
             Hop.warn("Database problems during refresh: " + e.getMessage());

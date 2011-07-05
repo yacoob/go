@@ -7,7 +7,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
@@ -35,17 +36,16 @@ final class UrlFetch {
      * @param url
      *            URL to fetch
      * @return the resulting {@link JSONobject}
-     * @throws ClientProtocolException
+     * @throws IOException
      */
     protected static JSONObject urlToJSONObject(final String url)
-            throws ClientProtocolException {
+            throws IOException {
         JSONObject parsed = null;
         try {
             final String jsonblob = urlToString(url);
             if (jsonblob != null) {
-                // FIXME: this parsing fails on non-JSON response
-                //        and on non-200 responses (including "nothing new" from server)
-                parsed = (JSONObject) new JSONTokener(jsonblob).nextValue();
+                final JSONTokener tokener = new JSONTokener(jsonblob);
+                parsed = (JSONObject) tokener.nextValue();
             }
         } catch (final JSONException e) {
             Hop.warn("Trampoline server response is not a valid JSON: "
@@ -57,7 +57,7 @@ final class UrlFetch {
     protected static JSONObject urlToJSONObjectBoring(final String url) {
         try {
             return UrlFetch.urlToJSONObject(url);
-        } catch (final ClientProtocolException e) {
+        } catch (final IOException e) {
             Hop.warn("Problems talking to Trampoline server: " + e.getMessage());
             return null;
         }
@@ -69,16 +69,20 @@ final class UrlFetch {
      * @param url
      *            URL to fetch
      * @return content of the page as {@link String}
-     * @throws ClientProtocolException
+     * @throws IOException
      */
-    protected static String urlToString(final String url) throws ClientProtocolException {
+    protected static String urlToString(final String url) throws IOException {
         BufferedReader reader = null;
-        String response = null;
+        String content = null;
         try {
-            final URI u = new URI(url);
-            final HttpGet r = new HttpGet(u);
-            final HttpResponse l = FETCHER.execute(r);
-            reader = new BufferedReader(new InputStreamReader(l.getEntity()
+            final HttpGet request = new HttpGet(new URI(url));
+            final HttpResponse response = FETCHER.execute(request);
+            final StatusLine status = response.getStatusLine();
+            final int responseCode = status.getStatusCode();
+            if (responseCode / 100 >= 4) {
+                throw new HttpResponseException(responseCode, status.getReasonPhrase());
+            }
+            reader = new BufferedReader(new InputStreamReader(response.getEntity()
                     .getContent()));
 
             String line;
@@ -86,13 +90,14 @@ final class UrlFetch {
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
             }
-            response = sb.toString();
+            content = sb.toString();
         } catch (final URISyntaxException e) {
             Hop.warn("Malformed URL: " + e.getMessage());
-        } catch (final ClientProtocolException e) {
-            throw e;
+        } catch (final HttpResponseException e) {
+            throw(e);
         } catch (final IOException e) {
             Hop.warn("Problems talking to remote server: " + e.getMessage());
+            throw(e);
         } finally {
             try {
                 if (reader != null) {
@@ -103,6 +108,6 @@ final class UrlFetch {
                         + e.getMessage());
             }
         }
-        return response;
+        return content;
     }
 }

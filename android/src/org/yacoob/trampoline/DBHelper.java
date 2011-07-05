@@ -2,7 +2,6 @@ package org.yacoob.trampoline;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.json.JSONException;
@@ -16,9 +15,11 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
 class DBHelper extends SQLiteOpenHelper {
-    private static final String DB_NAME = "hopdb";
+    private static final String DB_NAME = "hop.db";
     private static final int DB_VERSION = 1;
     private static final String STACK = "stack";
+
+    private SQLiteDatabase db;
 
     static class DbHelperException extends Exception {
         private static final long serialVersionUID = 945002551113629770L;
@@ -30,6 +31,7 @@ class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(final Context context) {
         super(context, DB_NAME, null, DB_VERSION);
+        db = getWritableDatabase();
     }
 
     @Override
@@ -52,61 +54,48 @@ class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    public SQLiteCursor getReadableCursor(final String table) throws DbHelperException {
+    public SQLiteCursor getCursorForTable(final String table) throws DbHelperException {
         final String tableName = getTableName(table);
-        return (SQLiteCursor) getReadableDatabase().query(
+        final SQLiteCursor cursor = (SQLiteCursor) db.query(
                 tableName,
                 null, null, null,
                 null, null, "url_id DESC");
-    }
-
-    public SQLiteCursor getWriteableCursor(final String table) throws DbHelperException {
-        final String tableName = getTableName(table);
-        return (SQLiteCursor) getWritableDatabase().query(
-                tableName,
-                null, null, null,
-                null, null, "url_id DESC");
+        return cursor;
     }
 
     public String getNewestUrlId(final String handle) throws DbHelperException {
-        final SQLiteCursor cursor = getReadableCursor(handle);
-        if (cursor != null) {
-            final int columnId = cursor.getColumnIndex("url_id");
-            cursor.moveToFirst();
-            return cursor.getString(columnId);
-        } else {
-            return null;
-        }
+        final SQLiteCursor cursor = getCursorForTable(handle);
+        final int columnId = cursor.getColumnIndex("url_id");
+        cursor.moveToFirst();
+        String newestUrlId = cursor.getString(columnId);
+        cursor.close();
+        return newestUrlId;
     }
 
     public int getUrlCount(final String handle) throws DbHelperException {
-        final SQLiteCursor cursor = getReadableCursor(handle);
-        if (cursor != null) {
-            return cursor.getCount();
-        } else {
-            return 0;
-        }
+        final SQLiteCursor cursor = getCursorForTable(handle);
+        int count = cursor.getCount();
+        cursor.close();
+        return count;
     }
 
     public Set<String> getUrlIds(final String handle) throws DbHelperException {
-        final SQLiteCursor cursor = getReadableCursor(handle);
+        final SQLiteCursor cursor = getCursorForTable(handle);
         final int columnId = cursor.getColumnIndex("url_id");
         final HashSet<String> set = new HashSet<String>();
         cursor.moveToFirst();
-        while (cursor.isAfterLast() == false) {
+        while (! cursor.isAfterLast()) {
             set.add(cursor.getString(columnId));
             cursor.moveToNext();
         }
+        cursor.close();
         return set;
     }
 
     public Boolean insertJsonObjects(final String handle, final Collection<JSONObject> objects) throws DbHelperException {
         Boolean dataChanged = false;
-        if (objects.size() != 0) {
-            final SQLiteDatabase db = getWritableDatabase();
-            final Iterator<JSONObject> it = objects.iterator();
-            while (it.hasNext()) {
-                final JSONObject data = it.next();
+        if (objects != null) {
+            for (JSONObject data : objects) {
                 final ContentValues values = new ContentValues();
                 try {
                     values.put("url_id", data.getString("id"));
@@ -120,22 +109,17 @@ class DBHelper extends SQLiteOpenHelper {
                             + e.getMessage());
                 }
             }
-            db.close();
         }
         return dataChanged;
     }
 
     public Boolean removeIds(final String handle, final Collection<String> ids) throws DbHelperException {
         Boolean dataChanged = false;
-        if (ids.size() != 0) {
-            final SQLiteDatabase db = getWritableDatabase();
-            final Iterator<String> it = ids.iterator();
-            while (it.hasNext()) {
-                final String id[] = {it.next()};
-                db.delete(getTableName(handle), "url_id=?", id);
+        if (ids != null) {
+            for(String id : ids) {
+                db.delete(getTableName(handle), "url_id=?", new String[] {id});
                 dataChanged = true;
             }
-            db.close();
         }
         return dataChanged;
     }

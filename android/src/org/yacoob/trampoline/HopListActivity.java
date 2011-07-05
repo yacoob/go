@@ -18,15 +18,15 @@ public class HopListActivity extends ListActivity {
     private boolean is_offline = false;
     private TaskRefreshList refresh_task;
     private DBHelper dbhelper;
-    private SQLiteCursor urls;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         app = (Hop) getApplication();
         super.onCreate(savedInstanceState);
         dbhelper = new DBHelper(this);
+        SQLiteCursor urls = null;
         try {
-            urls = dbhelper.getWriteableCursor("stack");
+            urls = dbhelper.getCursorForTable("stack");
         } catch (final DbHelperException e) {
             throw new RuntimeException("Can't open database.");
         }
@@ -103,7 +103,10 @@ public class HopListActivity extends ListActivity {
             setOnline();
         }
         if (gotNewData) {
-            urls.requery();
+            final HopSQLAdapter adapter = (HopSQLAdapter) getListAdapter();
+            final SQLiteCursor cursor = (SQLiteCursor) adapter.getCursor();
+            cursor.requery();
+            Hop.warn("in current cursor:" + adapter.getCursor().getCount());
         }
         refresh_task = null;
     }
