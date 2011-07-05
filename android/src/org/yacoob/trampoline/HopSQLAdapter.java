@@ -6,7 +6,7 @@ import android.widget.SimpleCursorAdapter;
 
 class HopSQLAdapter extends SimpleCursorAdapter {
     static final int list_item = R.layout.listitem;
-    static final int[] to = { R.id.first, R.id.second };
+    static final int[] to = { R.id.display_url, R.id.date };
     static final String[] from = {"display_url", "date"};
 
     public HopSQLAdapter(Context context, Cursor c) {

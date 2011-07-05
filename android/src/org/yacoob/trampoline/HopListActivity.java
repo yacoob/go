@@ -4,6 +4,7 @@ import org.yacoob.trampoline.DBHelper.DbHelperException;
 
 import android.app.ListActivity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -56,14 +57,14 @@ public class HopListActivity extends ListActivity {
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        final UrlEntry item = (UrlEntry) l.getItemAtPosition(position);
+        final Cursor cursor = (Cursor) getListView().getItemAtPosition(position);
         // We're cheating here: if we know that Trampoline is not available,
         // there's no point in trying to open an URL pointing to it. Instead,
         // use target URL. It won't be popped from stack (it is located on
         // Trampoline itself after all), but at least user will see the URL she
         // wants and will be happy.
-        final String url = is_offline == true ? item.getDisplayUrl() : item.getUrl();
-        app.showInfo(url);
+        final String column = is_offline == true ? "display_url" : "pop_url";
+        final String url = cursor.getString(cursor.getColumnIndex(column));
         this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
 
@@ -106,7 +107,6 @@ public class HopListActivity extends ListActivity {
             final HopSQLAdapter adapter = (HopSQLAdapter) getListAdapter();
             final SQLiteCursor cursor = (SQLiteCursor) adapter.getCursor();
             cursor.requery();
-            Hop.warn("in current cursor:" + adapter.getCursor().getCount());
         }
         refresh_task = null;
     }
