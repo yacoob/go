@@ -1,6 +1,8 @@
 package org.yacoob.trampoline;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,7 +16,9 @@ import org.json.JSONObject;
 import org.yacoob.trampoline.DBHelper.DbHelperException;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 
 /**
  * {@link AsyncTask} implementing URL list refresh. It's slightly smarter than
@@ -50,7 +54,15 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
     TaskRefreshList(final HopListActivity activity, final String list,
             final DBHelper databaseHelper) {
         this.listName = list;
-        this.url = Hop.RESTURL + "/" + this.listName;
+        PreferenceManager.setDefaultValues(activity, R.layout.preferences, false);
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        String baseUrl = prefs.getString("baseUrl", Hop.BASEURL);
+        try {
+            new URI(baseUrl);
+        } catch (final URISyntaxException e) {
+            baseUrl = Hop.BASEURL;
+        }
+        this.url = baseUrl + "/r/" + this.listName;
         this.dbhelper = databaseHelper;
         attach(activity);
     }

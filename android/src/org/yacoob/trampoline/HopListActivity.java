@@ -4,6 +4,7 @@ import org.yacoob.trampoline.DBHelper.DbHelperException;
 
 import android.app.ListActivity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.net.Uri;
@@ -19,6 +20,7 @@ public class HopListActivity extends ListActivity {
     private boolean is_offline = false;
     private TaskRefreshList refresh_task;
     private DBHelper dbhelper;
+    private SharedPreferences prefs;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -81,6 +83,8 @@ public class HopListActivity extends ListActivity {
         case R.id.refresh:
             refreshUrlList();
             return true;
+        case R.id.prefs:
+            startActivity(new Intent(this, HopPreferences.class));
         case R.id.exit:
             finish();
             return true;

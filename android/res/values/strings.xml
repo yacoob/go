@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Trampoline</string>
     <string name="menu_main_refresh">Refresh</string>
+    <string name="prefs">Preferences</string>
     <string name="exit">Exit app</string>
     <string name="fetch_failed">Trampoline server unreachable :(</string>
     <string name="offline_indicator">(stale)</string>
