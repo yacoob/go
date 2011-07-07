@@ -1,8 +1,6 @@
 package org.yacoob.trampoline;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -54,14 +52,8 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
     TaskRefreshList(final HopListActivity activity, final String list,
             final DBHelper databaseHelper) {
         this.listName = list;
-        PreferenceManager.setDefaultValues(activity, R.layout.preferences, false);
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-        String baseUrl = prefs.getString("baseUrl", Hop.BASEURL);
-        try {
-            new URI(baseUrl);
-        } catch (final URISyntaxException e) {
-            baseUrl = Hop.BASEURL;
-        }
+        final String baseUrl = prefs.getString("baseUrl", Hop.BASEURL);
         this.url = baseUrl + "/r/" + this.listName;
         this.dbhelper = databaseHelper;
         attach(activity);
@@ -185,9 +177,11 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
             }
         } catch (final IOException e) {
             netProblems = e;
+            return dataChanged;
         } catch (final DbHelperException e) {
             Hop.warn("Database problems during refresh: " + e.getMessage());
             dataChanged = false;
+            return dataChanged;
         }
         return dataChanged;
     }

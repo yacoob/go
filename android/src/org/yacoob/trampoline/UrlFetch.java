@@ -93,6 +93,7 @@ final class UrlFetch {
             content = sb.toString();
         } catch (final URISyntaxException e) {
             Hop.warn("Malformed URL: " + e.getMessage());
+            throw(new IOException("Malformed URL"));
         } catch (final HttpResponseException e) {
             throw(e);
         } catch (final IOException e) {

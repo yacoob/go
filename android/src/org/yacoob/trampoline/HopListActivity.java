@@ -4,11 +4,11 @@ import org.yacoob.trampoline.DBHelper.DbHelperException;
 
 import android.app.ListActivity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -20,12 +20,16 @@ public class HopListActivity extends ListActivity {
     private boolean is_offline = false;
     private TaskRefreshList refresh_task;
     private DBHelper dbhelper;
-    private SharedPreferences prefs;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         app = (Hop) getApplication();
         super.onCreate(savedInstanceState);
+
+        // Set default values for preferences.
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+
+        // Open database.
         dbhelper = new DBHelper(this);
         SQLiteCursor urls = null;
         try {
@@ -33,8 +37,11 @@ public class HopListActivity extends ListActivity {
         } catch (final DbHelperException e) {
             throw new RuntimeException("Can't open database.");
         }
+
+        // Main list turn on :)
         setListAdapter(new HopSQLAdapter(this, urls));
         setContentView(R.layout.main);
+
         // Recover background task, if there's one.
         refresh_task = (TaskRefreshList) getLastNonConfigurationInstance();
         if (refresh_task != null) {
@@ -84,6 +91,7 @@ public class HopListActivity extends ListActivity {
             refreshUrlList();
             return true;
         case R.id.prefs:
+            // FIXME: back key doesn't work
             startActivity(new Intent(this, HopPreferences.class));
         case R.id.exit:
             finish();
@@ -100,14 +108,14 @@ public class HopListActivity extends ListActivity {
         }
     }
 
-    void refreshDone(Boolean gotNewData, Exception networkProblems) {
+    void refreshDone(Boolean dataChanged, Exception networkProblems) {
         if (networkProblems != null) {
             setOffline();
             app.showComplaint(getString(R.string.fetch_failed));
         } else {
             setOnline();
         }
-        if (gotNewData) {
+        if (dataChanged) {
             final HopSQLAdapter adapter = (HopSQLAdapter) getListAdapter();
             final SQLiteCursor cursor = (SQLiteCursor) adapter.getCursor();
             cursor.requery();

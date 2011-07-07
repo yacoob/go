@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-
 	<EditTextPreference 
 	    android:key="baseUrl"
 		android:title="Trampoline server"
-		android:summary="full URL"
-		android:defaultValue="http://192.168.1.34:8080/hop"
-		android:singleLine="true"
-		/>
-
+		android:singleLine="true" 
+		android:defaultValue="@string/DEFAULT_BASE_URL"
+		android:inputType="textUri"/>
 </PreferenceScreen>
