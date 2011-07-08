@@ -11,7 +11,5 @@ class HopSQLAdapter extends SimpleCursorAdapter {
 
     public HopSQLAdapter(Context context, Cursor c) {
         super(context, list_item, c, from, to);
-        // TODO Auto-generated constructor stub
     }
-
 }

@@ -91,8 +91,8 @@ public class HopListActivity extends ListActivity {
             refreshUrlList();
             return true;
         case R.id.prefs:
-            // FIXME: back key doesn't work
             startActivity(new Intent(this, HopPreferences.class));
+            return true;
         case R.id.exit:
             finish();
             return true;
@@ -124,13 +124,13 @@ public class HopListActivity extends ListActivity {
     }
 
     private void setOffline() {
-        setTitle(getString(R.string.app_name) + " "
+        setTitle(getString(R.string.activity_main) + " "
                 + getString(R.string.offline_indicator));
         is_offline = true;
     }
 
     private void setOnline() {
-        setTitle(R.string.app_name);
+        setTitle(R.string.activity_main);
         is_offline = false;
     }
 }
