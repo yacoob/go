@@ -6,4 +6,9 @@
 		android:singleLine="true" 
 		android:defaultValue="@string/DEFAULT_BASE_URL"
 		android:inputType="textUri"/>
+	<EditTextPreference 
+	    android:key="wifiName"
+	    android:title="Home network name"
+	    android:singleLine="true"
+	    android:defaultValue=""/>
 </PreferenceScreen>

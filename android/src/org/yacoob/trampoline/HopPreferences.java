@@ -12,6 +12,7 @@ import android.preference.PreferenceManager;
 
 public class HopPreferences extends PreferenceActivity implements OnSharedPreferenceChangeListener {
     private static Pattern url = Pattern.compile("\\(?\\bhttp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
+    private static String[] editTextPrefs = { "baseUrl", "wifiName" };
     private SharedPreferences prefs;
 
     @Override
@@ -22,7 +23,7 @@ public class HopPreferences extends PreferenceActivity implements OnSharedPrefer
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        setSummary("baseUrl");
+        setSummaries();
         prefs.registerOnSharedPreferenceChangeListener(this);
     }
 
@@ -36,12 +37,14 @@ public class HopPreferences extends PreferenceActivity implements OnSharedPrefer
                 final String default_url = getString(R.string.DEFAULT_BASE_URL);
                 ((EditTextPreference) findPreference("baseUrl")).setText(default_url);
             }
-            setSummary("baseUrl");
         }
+        setSummaries();
     }
 
-    private void setSummary(String key) {
-        final EditTextPreference p = (EditTextPreference) findPreference(key);
-        p.setSummary(prefs.getString(key, null));
+    private void setSummaries() {
+        for (final String key: editTextPrefs) {
+            final EditTextPreference p = (EditTextPreference) findPreference(key);
+            p.setSummary(prefs.getString(key, null));
+        }
     }
 }

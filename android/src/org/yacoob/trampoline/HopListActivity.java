@@ -102,9 +102,13 @@ public class HopListActivity extends ListActivity {
     }
 
     private void refreshUrlList() {
-        if (refresh_task == null) {
-            refresh_task = new TaskRefreshList(this, "stack", dbhelper);
-            refresh_task.execute();
+        if (app.onHomeNetwork()) {
+            if (refresh_task == null) {
+                refresh_task = new TaskRefreshList(this, "stack", dbhelper);
+                refresh_task.execute();
+            }
+        } else {
+            setOffline();
         }
     }
 

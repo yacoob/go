@@ -1,6 +1,10 @@
 package org.yacoob.trampoline;
 
 import android.app.Application;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -9,14 +13,11 @@ import android.widget.Toast;
  */
 public class Hop extends Application {
 
-    /** URL of Trampoline serwer. */
-    static final String BASEURL = "http://192.168.1.34:8080/hop";
+    /** URL of Trampoline server. */
+    static final String BASEURL = "http://go/hop";
 
-    /** Filename to cache list data to. */
-    static final String CACHE_FILE = "url_cache";
-
-    /** URL of JSON endpoint on Trampoline server. */
-    static final String RESTURL = BASEURL + "/r";
+    /** Offline indicator. */
+    static final Boolean isOffline = false;
 
     /** Tag for Android logging. */
     static final String LOGTAG = "Trampoline";
@@ -57,5 +58,16 @@ public class Hop extends Application {
 
     void showInfo(String info) {
         showToast(info, INFO_TIME);
+    }
+
+    Boolean onHomeNetwork() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        final String homeWifi = prefs.getString("wifiName", null);
+        if (homeWifi != null && !homeWifi.isEmpty()) {
+            final String currentNetwork = ((WifiManager) getSystemService(Context.WIFI_SERVICE)).getConnectionInfo().getSSID();
+            return (homeWifi.equals(currentNetwork) ? true : false);
+        } else {
+            return true;
+        }
     }
 }
