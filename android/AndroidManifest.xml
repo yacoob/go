@@ -14,5 +14,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".HopPreferences" android:label="@string/activity_preferences"/>
+        <activity android:name=".HopPushActivity" android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter android:label="@string/push_popupmenu_entry">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

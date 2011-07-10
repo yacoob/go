@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Trampoline</string>
+    <string name="prefs_base_url">Server URL</string>
+    <string name="prefs_wifi_name">Home network name</string>
     <string name="menu_main_refresh">Refresh</string>
     <string name="menu_main_prefs">Preferences</string>
     <string name="menu_main_exit">Exit app</string>
@@ -9,4 +11,8 @@
     <string name="DEFAULT_BASE_URL">http://192.168.1.34:8080/hop</string>
     <string name="activity_main">Trampoline</string>
     <string name="activity_preferences">Trampoline preferences</string>
+    <string name="push_popupmenu_entry">*bounce*</string>
+    <string name="push_msg_active">Bouncing URL off Trampoline...</string>
+    <string name="push_msg_done">*bounce*</string>
+    <string name="push_msg_failed">*crash*</string>
 </resources>

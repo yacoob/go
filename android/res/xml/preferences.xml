@@ -2,13 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 	<EditTextPreference 
 	    android:key="baseUrl"
-		android:title="Server URL"
+		android:title="@string/prefs_base_url"
 		android:singleLine="true" 
 		android:defaultValue="@string/DEFAULT_BASE_URL"
 		android:inputType="textUri"/>
 	<EditTextPreference 
 	    android:key="wifiName"
-	    android:title="Home network name"
+	    android:title="@string/prefs_wifi_name"
 	    android:singleLine="true"
 	    android:defaultValue=""/>
 </PreferenceScreen>
