@@ -4,12 +4,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.widget.SimpleCursorAdapter;
 
-class HopSQLAdapter extends SimpleCursorAdapter {
-    static final int list_item = R.layout.listitem;
-    static final int[] to = { R.id.display_url, R.id.date };
-    static final String[] from = {"display_url", "date"};
+final class HopSQLAdapter extends SimpleCursorAdapter {
+    static final int LISTITEM = R.layout.listitem;
+    static final int[] TO_VIEWS = {
+            R.id.display_url, R.id.date
+    };
+    static final String[] FROM_COLUMNS = {
+            "display_url", "date"
+    };
 
-    public HopSQLAdapter(Context context, Cursor c) {
-        super(context, list_item, c, from, to);
+    public HopSQLAdapter(final Context context, final Cursor c) {
+        super(context, LISTITEM, c, FROM_COLUMNS, TO_VIEWS);
     }
 }

@@ -3,6 +3,7 @@ package org.yacoob.trampoline;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -79,11 +80,12 @@ final class UrlFetch {
             final HttpResponse response = FETCHER.execute(request);
             final StatusLine status = response.getStatusLine();
             final int responseCode = status.getStatusCode();
-            if (responseCode / 100 >= 4) {
-                throw new HttpResponseException(responseCode, status.getReasonPhrase());
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw new HttpResponseException(responseCode,
+                        status.getReasonPhrase());
             }
-            reader = new BufferedReader(new InputStreamReader(response.getEntity()
-                    .getContent()));
+            reader = new BufferedReader(new InputStreamReader(response
+                    .getEntity().getContent()));
 
             String line;
             final StringBuilder sb = new StringBuilder();
@@ -93,12 +95,16 @@ final class UrlFetch {
             content = sb.toString();
         } catch (final URISyntaxException e) {
             Hop.warn("Malformed URL: " + e.getMessage());
-            throw(new IOException("Malformed URL"));
+            throw (new IOException("Malformed URL"));
         } catch (final HttpResponseException e) {
-            throw(e);
+            if (e.getStatusCode() != HttpURLConnection.HTTP_NOT_FOUND) {
+                Hop.warn("Problems talking to remote server:"
+                        + e.getStatusCode() + " " + e.getMessage());
+            }
+            throw (e);
         } catch (final IOException e) {
             Hop.warn("Problems talking to remote server: " + e.getMessage());
-            throw(e);
+            throw (e);
         } finally {
             try {
                 if (reader != null) {

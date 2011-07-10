@@ -4,7 +4,7 @@
     <string name="menu_main_refresh">Refresh</string>
     <string name="menu_main_prefs">Preferences</string>
     <string name="menu_main_exit">Exit app</string>
-    <string name="fetch_failed">Trampoline server unreachable :(</string>
+    <string name="fetch_failed">I had problems talking to Trampoline server.</string>
     <string name="offline_indicator">(stale)</string>
     <string name="DEFAULT_BASE_URL">http://192.168.1.34:8080/hop</string>
     <string name="activity_main">Trampoline</string>

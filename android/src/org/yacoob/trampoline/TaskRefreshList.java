@@ -1,10 +1,10 @@
 package org.yacoob.trampoline;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.http.client.HttpResponseException;
@@ -13,7 +13,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.yacoob.trampoline.DBHelper.DbHelperException;
 
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
@@ -26,14 +25,13 @@ import android.preference.PreferenceManager;
  * {@link AsyncTask} was running. @see <a href="http://bit.ly/lWbHjZ">More
  * details</a>.
  * 
- * In short: {@link Activity} that created this task should call
- * {@link #detach()} and use some mechanism to carry over reference to running
- * {@link AsyncTask}. New instance of same activity should call
- * {@link #attach(HopListActivity)}.
+ * In short: Activity that created this task should call {@link #detach()} and
+ * use some mechanism to carry over reference to running {@link AsyncTask}. New
+ * instance of same activity should call {@link #attach(HopListActivity)}.
  */
-class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
+final class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
 
-    /** This variable is used to access current {@link Activity}. */
+    /** This variable is used to access current Activity. */
     private HopListActivity parentActivity = null;
 
     private final String url;
@@ -51,35 +49,37 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
      */
     TaskRefreshList(final HopListActivity activity, final String list,
             final DBHelper databaseHelper) {
-        this.listName = list;
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        listName = list;
+        final SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(activity);
         final String baseUrl = prefs.getString("baseUrl", Hop.BASEURL);
-        this.url = baseUrl + "/r/" + this.listName;
-        this.dbhelper = databaseHelper;
+        url = baseUrl + "/r/" + listName;
+        dbhelper = databaseHelper;
         attach(activity);
     }
 
     /**
      * Associate task to activity. This reference will be used in
      * {@link #onPostExecute(JSONObject)} to call
-     * {@link HopListActivity#refreshDone(List)}.
+     * {@link HopListActivity#refreshDone()}.
      * 
      * @param activity
      *            Activity to attach to.
      */
     void attach(final HopListActivity activity) {
-        this.parentActivity = activity;
+        parentActivity = activity;
     }
 
     /**
      * Disassociate task from activity.
      */
     void detach() {
-        this.parentActivity = null;
+        parentActivity = null;
     }
 
     @SuppressWarnings("unchecked")
-    protected <T> Set<T> extractFromJson(final JSONObject o, final String arrayName) {
+    protected <T> Set<T> extractFromJson(final JSONObject o,
+            final String arrayName) {
         if (o == null) {
             return null;
         } else {
@@ -131,7 +131,7 @@ class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
                 newUrlsJson = UrlFetch.urlToJSONObject(fetchUrl);
             } catch (final HttpResponseException e) {
                 // No new URLs?
-                if (e.getStatusCode() == 404) {
+                if (e.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
                     newUrlsPresent = false;
                 } else {
                     throw (e);

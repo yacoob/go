@@ -15,14 +15,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
-public class HopListActivity extends ListActivity {
+public final class HopListActivity extends ListActivity {
     private Hop app;
-    private boolean is_offline = false;
-    private TaskRefreshList refresh_task;
+    private boolean isOffline = false;
+    private TaskRefreshList refreshTask;
     private DBHelper dbhelper;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         app = (Hop) getApplication();
         super.onCreate(savedInstanceState);
 
@@ -43,9 +43,9 @@ public class HopListActivity extends ListActivity {
         setContentView(R.layout.main);
 
         // Recover background task, if there's one.
-        refresh_task = (TaskRefreshList) getLastNonConfigurationInstance();
-        if (refresh_task != null) {
-            refresh_task.attach(this);
+        refreshTask = (TaskRefreshList) getLastNonConfigurationInstance();
+        if (refreshTask != null) {
+            refreshTask.attach(this);
         }
     }
 
@@ -58,34 +58,36 @@ public class HopListActivity extends ListActivity {
 
     @Override
     public Object onRetainNonConfigurationInstance() {
-        if (refresh_task != null) {
-            refresh_task.detach();
+        if (refreshTask != null) {
+            refreshTask.detach();
         }
-        return refresh_task;
+        return refreshTask;
     }
 
     @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        final Cursor cursor = (Cursor) getListView().getItemAtPosition(position);
+    public void onListItemClick(final ListView l, final View v,
+            final int position, final long id) {
+        final Cursor cursor = (Cursor) getListView()
+                .getItemAtPosition(position);
         // We're cheating here: if we know that Trampoline is not available,
         // there's no point in trying to open an URL pointing to it. Instead,
         // use target URL. It won't be popped from stack (it is located on
         // Trampoline itself after all), but at least user will see the URL she
         // wants and will be happy.
-        final String column = is_offline == true ? "display_url" : "pop_url";
+        final String column = isOffline ? "display_url" : "pop_url";
         final String url = cursor.getString(cursor.getColumnIndex(column));
-        this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         final MenuInflater mi = getMenuInflater();
         mi.inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
         case R.id.refresh:
             refreshUrlList();
@@ -103,16 +105,16 @@ public class HopListActivity extends ListActivity {
 
     private void refreshUrlList() {
         if (app.onHomeNetwork()) {
-            if (refresh_task == null) {
-                refresh_task = new TaskRefreshList(this, "stack", dbhelper);
-                refresh_task.execute();
+            if (refreshTask == null) {
+                refreshTask = new TaskRefreshList(this, "stack", dbhelper);
+                refreshTask.execute();
             }
         } else {
             setOffline();
         }
     }
 
-    void refreshDone(Boolean dataChanged, Exception networkProblems) {
+    void refreshDone(final Boolean dataChanged, final Exception networkProblems) {
         if (networkProblems != null) {
             setOffline();
             app.showComplaint(getString(R.string.fetch_failed));
@@ -124,17 +126,17 @@ public class HopListActivity extends ListActivity {
             final SQLiteCursor cursor = (SQLiteCursor) adapter.getCursor();
             cursor.requery();
         }
-        refresh_task = null;
+        refreshTask = null;
     }
 
     private void setOffline() {
         setTitle(getString(R.string.activity_main) + " "
                 + getString(R.string.offline_indicator));
-        is_offline = true;
+        isOffline = true;
     }
 
     private void setOnline() {
         setTitle(R.string.activity_main);
-        is_offline = false;
+        isOffline = false;
     }
 }

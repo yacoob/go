@@ -11,13 +11,13 @@ import android.widget.Toast;
 /**
  * Helper class; constants and helper functions. Very static.
  */
-public class Hop extends Application {
+public final class Hop extends Application {
 
     /** URL of Trampoline server. */
     static final String BASEURL = "http://go/hop";
 
     /** Offline indicator. */
-    static final Boolean isOffline = false;
+    static final Boolean ISOFFLINE = false;
 
     /** Tag for Android logging. */
     static final String LOGTAG = "Trampoline";
@@ -48,23 +48,25 @@ public class Hop extends Application {
         Log.w(LOGTAG, msg);
     }
 
-    private void showToast(String msg, int time) {
+    private void showToast(final String msg, final int time) {
         Toast.makeText(getApplicationContext(), msg, time).show();
     }
 
-    void showComplaint(String complaint) {
+    void showComplaint(final String complaint) {
         showToast(complaint, COMPLAINT_TIME);
     }
 
-    void showInfo(String info) {
+    void showInfo(final String info) {
         showToast(info, INFO_TIME);
     }
 
     Boolean onHomeNetwork() {
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        final SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(this);
         final String homeWifi = prefs.getString("wifiName", null);
         if (homeWifi != null && !homeWifi.isEmpty()) {
-            final String currentNetwork = ((WifiManager) getSystemService(Context.WIFI_SERVICE)).getConnectionInfo().getSSID();
+            final String currentNetwork = ((WifiManager) getSystemService(Context.WIFI_SERVICE))
+                    .getConnectionInfo().getSSID();
             return (homeWifi.equals(currentNetwork) ? true : false);
         } else {
             return true;

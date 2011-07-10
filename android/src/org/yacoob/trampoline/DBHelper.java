@@ -14,7 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
-class DBHelper extends SQLiteOpenHelper {
+final class DBHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "hop.db";
     private static final int DB_VERSION = 1;
     private static final String STACK = "stack";
@@ -24,7 +24,7 @@ class DBHelper extends SQLiteOpenHelper {
     static class DbHelperException extends Exception {
         private static final long serialVersionUID = 945002551113629770L;
 
-        public DbHelperException(String msg) {
+        public DbHelperException(final String msg) {
             super(msg);
         }
     }
@@ -35,31 +35,36 @@ class DBHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onCreate(final SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS " + STACK + " ("
-                + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+    public void onCreate(final SQLiteDatabase database) {
+        database.execSQL("CREATE TABLE IF NOT EXISTS "
+                + STACK
+                + " ("
+                + BaseColumns._ID
+                + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "url_id VARCHAR, display_url VARCHAR, pop_url VARCHAR, date VARCHAR)");
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    public void onUpgrade(final SQLiteDatabase database, final int oldVersion,
+            final int newVersion) {
 
     }
 
-    public static String getTableName(final String handle) throws DbHelperException {
+    public static String getTableName(final String handle)
+            throws DbHelperException {
         if (handle == "stack") {
             return STACK;
         } else {
-            throw new DbHelperException("There's no table assigned to: " + handle);
+            throw new DbHelperException("There's no table assigned to: "
+                    + handle);
         }
     }
 
-    public SQLiteCursor getCursorForTable(final String table) throws DbHelperException {
+    public SQLiteCursor getCursorForTable(final String table)
+            throws DbHelperException {
         final String tableName = getTableName(table);
-        final SQLiteCursor cursor = (SQLiteCursor) db.query(
-                tableName,
-                null, null, null,
-                null, null, "url_id DESC");
+        final SQLiteCursor cursor = (SQLiteCursor) db.query(tableName, null,
+                null, null, null, null, "url_id DESC");
         return cursor;
     }
 
@@ -84,7 +89,7 @@ class DBHelper extends SQLiteOpenHelper {
         final int columnId = cursor.getColumnIndex("url_id");
         final HashSet<String> set = new HashSet<String>();
         cursor.moveToFirst();
-        while (! cursor.isAfterLast()) {
+        while (!cursor.isAfterLast()) {
             set.add(cursor.getString(columnId));
             cursor.moveToNext();
         }
@@ -92,7 +97,8 @@ class DBHelper extends SQLiteOpenHelper {
         return set;
     }
 
-    public Boolean insertJsonObjects(final String handle, final Collection<JSONObject> objects) throws DbHelperException {
+    public Boolean insertJsonObjects(final String handle,
+            final Collection<JSONObject> objects) throws DbHelperException {
         Boolean dataChanged = false;
         if (objects != null) {
             for (JSONObject data : objects) {
@@ -113,11 +119,14 @@ class DBHelper extends SQLiteOpenHelper {
         return dataChanged;
     }
 
-    public Boolean removeIds(final String handle, final Collection<String> ids) throws DbHelperException {
+    public Boolean removeIds(final String handle, final Collection<String> ids)
+            throws DbHelperException {
         Boolean dataChanged = false;
         if (ids != null) {
-            for(String id : ids) {
-                db.delete(getTableName(handle), "url_id=?", new String[] {id});
+            for (String id : ids) {
+                db.delete(getTableName(handle), "url_id=?", new String[] {
+                    id
+                });
                 dataChanged = true;
             }
         }
