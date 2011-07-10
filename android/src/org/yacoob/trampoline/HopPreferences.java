@@ -10,15 +10,36 @@ import android.preference.EditTextPreference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
+/**
+ * Preferences activity.
+ */
 public final class HopPreferences extends PreferenceActivity implements
         OnSharedPreferenceChangeListener {
+
+    /**
+     * Regular expression used for verifying whether given String is an actual
+     * URL. There are readymade patterns in Android SDK, but they're too
+     * generic. We really want simple HTTP(s) URL here.
+     */
     private static Pattern url = Pattern
             .compile("\\(?\\bhttp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
+
+    /**
+     * Array enumerating all EditTextPreferences in this activity. We use this
+     * list for things like summaries updates.
+     */
     private static String[] editTextPrefs = {
             "baseUrl", "wifiName"
     };
+
+    /** Preferences object. */
     private SharedPreferences prefs;
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.preference.PreferenceActivity#onCreate(android.os.Bundle)
+     */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,9 +52,32 @@ public final class HopPreferences extends PreferenceActivity implements
         prefs.registerOnSharedPreferenceChangeListener(this);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.content.SharedPreferences.OnSharedPreferenceChangeListener#
+     * onSharedPreferenceChanged(android.content.SharedPreferences,
+     * java.lang.String)
+     */
     @Override
     public void onSharedPreferenceChanged(
             final SharedPreferences sharedPreferences, final String key) {
+
+        // Unregister as handler to avoid multiple calls on edits.
+        prefs.unregisterOnSharedPreferenceChangeListener(this);
+
+        // Trim spaces from strings.
+        for (final String pref : editTextPrefs) {
+            final String p = prefs.getString(pref, null);
+            if (p != null) {
+                final String f = p.trim();
+                if (!p.equals(f)) {
+                    ((EditTextPreference) findPreference(pref)).setText(f);
+                }
+            }
+        }
+
+        // Sanity check Trampoline URL.
         if (key.equals("baseUrl")) {
             final String baseUrl = prefs.getString("baseUrl", null);
             final Matcher m = url.matcher(baseUrl);
@@ -43,9 +87,16 @@ public final class HopPreferences extends PreferenceActivity implements
                         .setText(defaultUrl);
             }
         }
+
+        // Set summaries on prefs screen, re-register as handler.
         setSummaries();
+        prefs.registerOnSharedPreferenceChangeListener(this);
     }
 
+    /**
+     * Updates the summaries in activity. Too bad Android doesn't offer a
+     * convenience method to do that.
+     */
     private void setSummaries() {
         for (final String key : editTextPrefs) {
             final EditTextPreference p = (EditTextPreference) findPreference(key);

@@ -15,12 +15,25 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
+/**
+ * Main activity class. Presents user with a list of current URLs.
+ */
 public final class HopListActivity extends ListActivity {
+
+    /** Application object. */
     private Hop app;
-    private boolean isOffline = false;
+
+    /** Reference to background AsyncTask, if present. */
     private TaskRefreshList refreshTask;
+
+    /** Database helper. */
     private DBHelper dbhelper;
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.app.Activity#onCreate(android.os.Bundle)
+     */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         app = (Hop) getApplication();
@@ -30,7 +43,7 @@ public final class HopListActivity extends ListActivity {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         // Open database.
-        dbhelper = new DBHelper(this);
+        dbhelper = new DBHelper(app);
         SQLiteCursor urls = null;
         try {
             urls = dbhelper.getCursorForTable("stack");
@@ -49,6 +62,11 @@ public final class HopListActivity extends ListActivity {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.app.Activity#onResume()
+     */
     @Override
     protected void onResume() {
         super.onResume();
@@ -56,6 +74,11 @@ public final class HopListActivity extends ListActivity {
         refreshUrlList();
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.app.Activity#onRetainNonConfigurationInstance()
+     */
     @Override
     public Object onRetainNonConfigurationInstance() {
         if (refreshTask != null) {
@@ -64,6 +87,12 @@ public final class HopListActivity extends ListActivity {
         return refreshTask;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.app.ListActivity#onListItemClick(android.widget.ListView,
+     * android.view.View, int, long)
+     */
     @Override
     public void onListItemClick(final ListView l, final View v,
             final int position, final long id) {
@@ -74,11 +103,16 @@ public final class HopListActivity extends ListActivity {
         // use target URL. It won't be popped from stack (it is located on
         // Trampoline itself after all), but at least user will see the URL she
         // wants and will be happy.
-        final String column = isOffline ? "display_url" : "pop_url";
+        final String column = app.isOffline() ? "display_url" : "pop_url";
         final String url = cursor.getString(cursor.getColumnIndex(column));
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
+     */
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         final MenuInflater mi = getMenuInflater();
@@ -86,6 +120,11 @@ public final class HopListActivity extends ListActivity {
         return true;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see android.app.Activity#onOptionsItemSelected(android.view.MenuItem)
+     */
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
@@ -103,6 +142,9 @@ public final class HopListActivity extends ListActivity {
         }
     }
 
+    /**
+     * Refreshes URL list.
+     */
     private void refreshUrlList() {
         if (app.onHomeNetwork()) {
             if (refreshTask == null) {
@@ -114,6 +156,15 @@ public final class HopListActivity extends ListActivity {
         }
     }
 
+    /**
+     * Callback for finishing URL list refresh.
+     * 
+     * @param dataChanged
+     *            Has data been modified as a result of refresh? This includes
+     *            inserts and removals.
+     * @param networkProblems
+     *            Has there been network problems during refresh?
+     */
     void refreshDone(final Boolean dataChanged, final Exception networkProblems) {
         if (networkProblems != null) {
             setOffline();
@@ -129,14 +180,20 @@ public final class HopListActivity extends ListActivity {
         refreshTask = null;
     }
 
+    /**
+     * Sets application offline.
+     */
     private void setOffline() {
         setTitle(getString(R.string.activity_main) + " "
                 + getString(R.string.offline_indicator));
-        isOffline = true;
+        app.setOffline(true);
     }
 
+    /**
+     * Sets application online.
+     */
     private void setOnline() {
         setTitle(R.string.activity_main);
-        isOffline = false;
+        app.setOffline(false);
     }
 }

@@ -22,22 +22,27 @@ import android.preference.PreferenceManager;
  * average {@link AsyncTask} - it uses {@link #parentActivity} to track which
  * activity it should report to. This is to account for configuration changes
  * (like screen rotation) causing activity that created this task to die while
- * {@link AsyncTask} was running. @see <a href="http://bit.ly/lWbHjZ">More
- * details</a>.
+ * AsyncTask was running. @see <a href="http://bit.ly/lWbHjZ">More details</a>.
  * 
  * In short: Activity that created this task should call {@link #detach()} and
  * use some mechanism to carry over reference to running {@link AsyncTask}. New
- * instance of same activity should call {@link #attach(HopListActivity)}.
+ * instance of same activity should call {@link #attach()}.
  */
 final class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
 
-    /** This variable is used to access current Activity. */
+    /** Reference to current Activity. */
     private HopListActivity parentActivity = null;
 
+    /** Base URL for Trampoline server. */
     private final String url;
+
+    /** List to update. */
     private final String listName;
+
+    /** Database helper. */
     private final DBHelper dbhelper;
 
+    /** Stores any exception that might have happened during the refresh. */
     private Exception netProblems;
 
     /**
@@ -46,6 +51,10 @@ final class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
      * 
      * @param activity
      *            Activity launching this task.
+     * @param list
+     *            Name of the URL list to update.
+     * @param databaseHelper
+     *            Reference to database helper.
      */
     TaskRefreshList(final HopListActivity activity, final String list,
             final DBHelper databaseHelper) {
@@ -77,24 +86,39 @@ final class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
         parentActivity = null;
     }
 
+    /**
+     * Extracts useful information from an JSONObject. By default it'll extract
+     * all values of an JSON object an return it as a Set. If you specify
+     * arrayName, it'll extract all values of named array contained in provided
+     * JSON object. Tested only for T in {JSONObject, String} :)
+     * 
+     * @param object
+     *            {@link JSONObject} to extract data from.
+     * @param <T>
+     *            Type of things to extract from JSON object.
+     * @param arrayName
+     *            If present, constraints extraction to an JSON array present in
+     *            object under this key.
+     * @return Set of extracted objects (of type T).
+     */
     @SuppressWarnings("unchecked")
-    protected <T> Set<T> extractFromJson(final JSONObject o,
+    protected <T> Set<T> extractFromJson(final JSONObject object,
             final String arrayName) {
-        if (o == null) {
+        if (object == null) {
             return null;
         } else {
             final HashSet<T> set = new HashSet<T>();
             try {
                 if (arrayName != null) {
-                    final JSONArray source = o.getJSONArray(arrayName);
+                    final JSONArray source = object.getJSONArray(arrayName);
                     for (int i = 0; i < source.length(); i++) {
                         set.add((T) source.get(i));
                     }
                 } else {
-                    final Iterator<String> it = o.keys();
+                    final Iterator<String> it = object.keys();
                     while (it.hasNext()) {
                         final String key = it.next();
-                        set.add((T) o.get(key));
+                        set.add((T) object.get(key));
                     }
                 }
             } catch (final ClassCastException e) {
