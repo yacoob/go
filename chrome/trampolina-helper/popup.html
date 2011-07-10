@@ -71,7 +71,7 @@ function buttons_handler(e) {
                 // construct url, then follow the link
                 chrome.tabs.getSelected(null, function(tab) {
                     var page_url = tab.url;
-                    var url = e.target.href + '?url=' + page_url;
+                    var url = e.target.href + '?url=' + encodeURIComponent(page_url);
                     var xhr = new XMLHttpRequest();
 
                     xhr.open('GET', url, false);
