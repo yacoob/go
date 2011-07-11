@@ -134,9 +134,6 @@ public final class HopListActivity extends ListActivity {
         case R.id.prefs:
             startActivity(new Intent(this, HopPreferences.class));
             return true;
-        case R.id.exit:
-            finish();
-            return true;
         default:
             return super.onOptionsItemSelected(item);
         }

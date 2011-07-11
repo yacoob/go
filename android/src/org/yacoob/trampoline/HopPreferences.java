@@ -1,7 +1,6 @@
 package org.yacoob.trampoline;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -15,14 +14,6 @@ import android.preference.PreferenceManager;
  */
 public final class HopPreferences extends PreferenceActivity implements
         OnSharedPreferenceChangeListener {
-
-    /**
-     * Regular expression used for verifying whether given String is an actual
-     * URL. There are readymade patterns in Android SDK, but they're too
-     * generic. We really want simple HTTP(s) URL here.
-     */
-    private static Pattern url = Pattern
-            .compile("\\(?\\bhttp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
 
     /**
      * Array enumerating all EditTextPreferences in this activity. We use this
@@ -80,7 +71,7 @@ public final class HopPreferences extends PreferenceActivity implements
         // Sanity check Trampoline URL.
         if (key.equals("baseUrl")) {
             final String baseUrl = prefs.getString("baseUrl", null);
-            final Matcher m = url.matcher(baseUrl);
+            final Matcher m = Hop.URL_PATTERN.matcher(baseUrl);
             if (!m.matches()) {
                 final String defaultUrl = getString(R.string.DEFAULT_BASE_URL);
                 ((EditTextPreference) findPreference("baseUrl"))

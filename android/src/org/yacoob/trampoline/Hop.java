@@ -1,5 +1,7 @@
 package org.yacoob.trampoline;
 
+import java.util.regex.Pattern;
+
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -19,6 +21,14 @@ public final class Hop extends Application {
 
     /** Tag for Android logging. */
     static final String LOGTAG = "Trampoline";
+
+    /**
+     * Regular expression used for verifying whether given String is an actual
+     * URL. There are readymade patterns in Android SDK, but they're too
+     * generic. We really want simple HTTP(s) URL here.
+     */
+    static Pattern URL_PATTERN = Pattern
+            .compile("\\(?\\bhttp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
 
     /** Time (ms) to show complaint {@link Toast} for. */
     private static final int COMPLAINT_TIME = 3000;

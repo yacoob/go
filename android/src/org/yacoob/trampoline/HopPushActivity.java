@@ -2,6 +2,7 @@ package org.yacoob.trampoline;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.regex.Matcher;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -18,7 +19,9 @@ import android.preference.PreferenceManager;
 public final class HopPushActivity extends Activity {
 
     /** How long should a finished push announcement remain on the screen? */
-    private final int ackDelay = 3000;
+    private final int ackDelay = 2000;
+
+    private Hop app;
 
     /*
      * (non-Javadoc)
@@ -28,6 +31,7 @@ public final class HopPushActivity extends Activity {
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        app = (Hop) getApplication();
     }
 
     /*
@@ -38,32 +42,47 @@ public final class HopPushActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        // FIXME: only handle actual URLs.
-        // FIXME: Handle offline situation.
-        final ProgressDialog dialog = new ProgressDialog(this);
-        dialog.setCancelable(false);
+
+        // Only handle actual URLs.
         final String sharedUrl = getIntent().getExtras().getString(
                 Intent.EXTRA_TEXT);
+        final Matcher m = Hop.URL_PATTERN.matcher(sharedUrl);
+        if (!m.matches()) {
+            app.showComplaint(getString(R.string.push_msg_not_url));
+            finish();
+            return;
+        }
+
+        // Check if we're offline.
+        if (!app.onHomeNetwork()) {
+            app.showComplaint(getString(R.string.push_msg_not_on_home_network));
+            finish();
+            return;
+        }
+
+        // Set up dialog window.
+        final ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setCancelable(false);
         dialog.setMessage(getString(R.string.push_msg_active));
         dialog.show();
 
+        // Work out URL at which we can push.
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         final SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(this);
-
-        // FIXME: verify whether pushUrl gets encoded properly.
         final String pushUrl = prefs.getString("baseUrl", null) + "/push?url="
                 + URLEncoder.encode(sharedUrl);
 
-        // FIXME: Use AsyncTask for pushing.
+        // Actually push the URL.
+        String result = getString(R.string.push_msg_done);
         try {
             UrlFetch.urlToString(pushUrl);
         } catch (final IOException e) {
-            dialog.setMessage(getString(R.string.push_msg_failed));
+            result = getString(R.string.push_msg_failed);
         }
-        // FIXME: handle the progress bar / spinner
-        dialog.setMessage(getString(R.string.push_msg_done));
+        dialog.setMessage(result);
 
+        // Hide the dialog and finish activity after some delay.
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
