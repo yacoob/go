@@ -71,7 +71,7 @@ public final class HopPreferences extends PreferenceActivity implements
         // Sanity check Trampoline URL.
         if (key.equals("baseUrl")) {
             final String baseUrl = prefs.getString("baseUrl", null);
-            final Matcher m = Hop.URL_PATTERN.matcher(baseUrl);
+            final Matcher m = Hop.URLPATTERN.matcher(baseUrl);
             if (!m.matches()) {
                 final String defaultUrl = getString(R.string.DEFAULT_BASE_URL);
                 ((EditTextPreference) findPreference("baseUrl"))

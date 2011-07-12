@@ -21,6 +21,7 @@ public final class HopPushActivity extends Activity {
     /** How long should a finished push announcement remain on the screen? */
     private final int ackDelay = 2000;
 
+    /** Reference to current Application object. */
     private Hop app;
 
     /*
@@ -46,7 +47,7 @@ public final class HopPushActivity extends Activity {
         // Only handle actual URLs.
         final String sharedUrl = getIntent().getExtras().getString(
                 Intent.EXTRA_TEXT);
-        final Matcher m = Hop.URL_PATTERN.matcher(sharedUrl);
+        final Matcher m = Hop.URLPATTERN.matcher(sharedUrl);
         if (!m.matches()) {
             app.showComplaint(getString(R.string.push_msg_not_url));
             finish();

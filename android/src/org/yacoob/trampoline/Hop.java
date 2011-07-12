@@ -27,7 +27,7 @@ public final class Hop extends Application {
      * URL. There are readymade patterns in Android SDK, but they're too
      * generic. We really want simple HTTP(s) URL here.
      */
-    static Pattern URL_PATTERN = Pattern
+    static final Pattern URLPATTERN = Pattern
             .compile("\\(?\\bhttp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
 
     /** Time (ms) to show complaint {@link Toast} for. */
