@@ -57,7 +57,8 @@ Whole thing lives in single Python script, trampolina.py. It doesn’t require a
 
 * it will use database located in `/tmp/db`;
 * it will listen on all interfaces, on port 9099
-* If you don’t like those defaults, provide Trampolina with arguments:
+
+If you don’t like those defaults, provide Trampolina with arguments:
 
     $ ./trampolina.py localhost 12345 /var/tmp/trampolina-database
 
