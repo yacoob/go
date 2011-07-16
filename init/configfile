@@ -2,6 +2,5 @@
 
 GO_USER="daemon"
 GO_DB="/var/lib/go"
-GO_DATA="/usr/share/go"
 GO_PORT="9099"
-GO_HOST=$(hostname)
+GO_HOST="127.0.0.1"

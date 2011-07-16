@@ -1,0 +1,6 @@
+* AsyncTask for push? carve out attach/detach functionality if so.
+* remove extra calls to PreferenceManager.setDefaultValues()
+* verify pause/resume behaviors for activities
+* day-based separators for list
+* background checking for urls
+* 'viewed' list

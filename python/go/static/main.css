@@ -1,0 +1,89 @@
+/* we don't like serifs */
+* {
+       font-family: sans-serif;
+}
+
+/* general look */
+body {
+       background: #3D8ABA;
+       color: #E0B64A;
+       width: 80%;
+       margin: 0% 10%;
+}
+
+
+/* standard links */
+a:link {
+    color: #BABABA; /* Babarybo, jestes smutna i nieszczesliwa */
+}
+
+a:visited {
+    color: black;
+}
+
+a:hover {
+       color: #454545;
+}
+
+/* links to control commands (edit, del, etc.) */
+a.controls, a.controls:visited {
+       text-decoration: none;
+       color: black;
+}
+
+
+/* no bullets, if list contains controls */
+ul.controls {
+       list-style-type: none;
+}
+
+/* visual feedback for the item under cursor */
+tr:hover, li:hover {
+       background: #4AA7E1;
+}
+
+/* URL tables in trampolina */
+table {
+    width: 100%;
+}
+
+table, td {
+    border: none;
+    border-collapse: collapse;
+    padding: 5px 25px;
+}
+
+tr.topborder>td {
+    padding-bottom: 40px;
+    border-top: 1px solid #BABABA;
+    background: #3D8ABA;
+    text-align: left;
+}
+
+td.timestamp {
+    width: 200px;
+    text-align: right;
+    font-style: italic;
+    font-size: 90%;
+}
+
+td.url {
+
+}
+
+/* stand-outs */
+pre {
+       background: #4AA7E1;
+       padding: 3ex 3em;
+       color: black;
+}
+
+/* small print */
+small, code {
+       color: black;
+}
+
+p.header, p.header a {
+       text-align: right;
+       text-decoration: none;
+}

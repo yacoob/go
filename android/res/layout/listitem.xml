@@ -1,0 +1,19 @@
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical" android:layout_height="fill_parent"
+	android:layout_width="match_parent" android:id="@+id/url_list_item">
+	<TextView android:layout_width="match_parent"
+		android:layout_height="wrap_content" android:text="(URL)" android:id="@+id/display_url"
+		android:padding="5sp"
+		android:textSize="20sp" 
+		android:lines="1" 
+        android:scrollHorizontally="true"
+		android:ellipsize="marquee"
+		/>
+	<TextView android:layout_width="match_parent"
+		android:layout_height="wrap_content" android:text="(date)" android:id="@+id/date"
+		android:textSize="10sp"
+		android:textStyle="italic"
+		android:gravity="right" 
+		/>
+</LinearLayout>

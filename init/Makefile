@@ -16,8 +16,3 @@ init: initscript
 	cp -f $(INITSCRIPT) $(INITDIR)/$(NAME)
 	chmod a+rx $(INITDIR)/$(NAME)
 	update-rc.d $(NAME) defaults
-
-fastcgi: CONFIGFILE = configfile.fastcgi
-fastcgi: INITSCRIPT = initscript.fastcgi
-fastcgi: NAME = go-fastcgi
-fastcgi: install
