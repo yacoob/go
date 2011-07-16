@@ -5,8 +5,6 @@
 * `cd python`
 * `python setup.py install`
 
-It's not on [PyPI](http://pypi.python.org/pypi). Yet :)
-
 Some degree of `sudo` intervention might be required in the above, depending on
 your setup. Remember to also change your `umask` to something sensible (like
 `022`), to avoid having installed files being unreadable to other users on the
@@ -28,8 +26,7 @@ human-readable urls, like `go/bank`. And for those occasions that you just want
 to send a long URL to another person, there's this crazy part.
 
 ## Crazy part
-...is called
-[Trampoline](http://swissarmyhammer.wordpress.com/2009/05/17/sproing/). Go
+...is called Trampoline. See `trampoline-story.md` for the story behind it. Go
 ahead, read it, and scowl in horror.
 
 In short, it's a LIFO stack of URLs, that
