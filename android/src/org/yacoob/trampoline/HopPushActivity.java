@@ -33,6 +33,7 @@ public final class HopPushActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = (Hop) getApplication();
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }
 
     /*
@@ -68,7 +69,6 @@ public final class HopPushActivity extends Activity {
         dialog.show();
 
         // Work out URL at which we can push.
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         final SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(this);
         final String pushUrl = prefs.getString("baseUrl", null) + "/push?url="

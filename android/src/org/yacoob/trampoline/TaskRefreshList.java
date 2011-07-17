@@ -28,10 +28,8 @@ import android.preference.PreferenceManager;
  * use some mechanism to carry over reference to running {@link AsyncTask}. New
  * instance of same activity should call {@link #attach()}.
  */
-final class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
-
-    /** Reference to current Activity. */
-    private HopListActivity parentActivity = null;
+final class TaskRefreshList extends
+        DetachableTask<String, Void, Boolean, HopListActivity> {
 
     /** Base URL for Trampoline server. */
     private final String url;
@@ -65,25 +63,6 @@ final class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
         url = baseUrl + "/r/" + listName;
         dbhelper = databaseHelper;
         attach(activity);
-    }
-
-    /**
-     * Associate task to activity. This reference will be used in
-     * {@link #onPostExecute(JSONObject)} to call
-     * {@link HopListActivity#refreshDone()}.
-     * 
-     * @param activity
-     *            Activity to attach to.
-     */
-    void attach(final HopListActivity activity) {
-        parentActivity = activity;
-    }
-
-    /**
-     * Disassociate task from activity.
-     */
-    void detach() {
-        parentActivity = null;
     }
 
     /**
@@ -219,9 +198,10 @@ final class TaskRefreshList extends AsyncTask<String, Void, Boolean> {
     protected void onPostExecute(final Boolean result) {
         // In theory, this method should not be called if original activity is
         // dead. In practice, let's check this.
-        if (parentActivity != null) {
+        final HopListActivity parent = getParentActivity();
+        if (parent != null) {
             // "Cave Johnson - we're done here." :)
-            parentActivity.refreshDone(result, netProblems);
+            parent.refreshDone(result, netProblems);
             detach();
         } else {
             // Yes, This Should Not Happen [tm].
