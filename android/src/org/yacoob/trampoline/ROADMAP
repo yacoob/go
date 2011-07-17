@@ -1,4 +1,3 @@
-* AsyncTask for push? carve out attach/detach functionality if so.
 * verify pause/resume behaviors for activities
 * day-based separators for list
 * background checking for urls

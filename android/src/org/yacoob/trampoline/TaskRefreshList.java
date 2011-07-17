@@ -14,22 +14,12 @@ import org.json.JSONObject;
 import org.yacoob.trampoline.DBHelper.DbHelperException;
 
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 
 /**
- * {@link AsyncTask} implementing URL list refresh. It's slightly smarter than
- * average {@link AsyncTask} - it uses {@link #parentActivity} to track which
- * activity it should report to. This is to account for configuration changes
- * (like screen rotation) causing activity that created this task to die while
- * AsyncTask was running. @see <a href="http://bit.ly/lWbHjZ">More details</a>.
- * 
- * In short: Activity that created this task should call {@link #detach()} and
- * use some mechanism to carry over reference to running {@link AsyncTask}. New
- * instance of same activity should call {@link #attach()}.
+ * AsyncTask implementing URL list refresh.
  */
-final class TaskRefreshList extends
-        DetachableTask<String, Void, Boolean, HopListActivity> {
+final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopListActivity> {
 
     /** Base URL for Trampoline server. */
     private final String url;
@@ -44,8 +34,7 @@ final class TaskRefreshList extends
     private Exception netProblems;
 
     /**
-     * Constructor. Associates freshly created task with activity that created
-     * it.
+     * Constructor. Associates freshly created task with activity that created it.
      * 
      * @param activity
      *            Activity launching this task.
@@ -54,11 +43,10 @@ final class TaskRefreshList extends
      * @param databaseHelper
      *            Reference to database helper.
      */
-    TaskRefreshList(final HopListActivity activity, final String list,
+    TaskRefreshList(final HopListActivity activity, final String list, //
             final DBHelper databaseHelper) {
         listName = list;
-        final SharedPreferences prefs = PreferenceManager
-                .getDefaultSharedPreferences(activity);
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         final String baseUrl = prefs.getString("baseUrl", Hop.BASEURL);
         url = baseUrl + "/r/" + listName;
         dbhelper = databaseHelper;
@@ -66,23 +54,21 @@ final class TaskRefreshList extends
     }
 
     /**
-     * Extracts useful information from an JSONObject. By default it'll extract
-     * all values of an JSON object an return it as a Set. If you specify
-     * arrayName, it'll extract all values of named array contained in provided
-     * JSON object. Tested only for T in {JSONObject, String} :)
+     * Extracts useful information from an JSONObject. By default it'll extract all values of an
+     * JSON object an return it as a Set. If you specify arrayName, it'll extract all values of
+     * named array contained in provided JSON object. Tested only for T in {JSONObject, String} :)
      * 
      * @param object
      *            {@link JSONObject} to extract data from.
      * @param <T>
      *            Type of things to extract from JSON object.
      * @param arrayName
-     *            If present, constraints extraction to an JSON array present in
-     *            object under this key.
+     *            If present, constraints extraction to an JSON array present in object under this
+     *            key.
      * @return Set of extracted objects (of type T).
      */
     @SuppressWarnings("unchecked")
-    protected <T> Set<T> extractFromJson(final JSONObject object,
-            final String arrayName) {
+    protected <T> Set<T> extractFromJson(final JSONObject object, final String arrayName) {
         if (object == null) {
             return null;
         } else {
@@ -143,8 +129,7 @@ final class TaskRefreshList extends
 
             if (newUrlsPresent) {
                 // Extract JSONObjects from newUrlsJson, add all of them to db
-                final Set<JSONObject> newUrls = extractFromJson(newUrlsJson,
-                        null);
+                final Set<JSONObject> newUrls = extractFromJson(newUrlsJson, null);
                 dataChanged |= dbhelper.insertJsonObjects(listName, newUrls);
             }
 
@@ -153,8 +138,7 @@ final class TaskRefreshList extends
             // doesn't happen, but we might end up in half-updated state after a
             // crash.
             final JSONObject remoteUrlsJson = UrlFetch.urlToJSONObject(url);
-            final Set<String> remoteIds = extractFromJson(remoteUrlsJson,
-                    listName);
+            final Set<String> remoteIds = extractFromJson(remoteUrlsJson, listName);
             final Set<String> localIds = dbhelper.getUrlIds(listName);
 
             // Drop local-remote from db.
@@ -170,8 +154,7 @@ final class TaskRefreshList extends
             if (newSingleIds.size() != 0) {
                 final Set<JSONObject> newObjects = new HashSet<JSONObject>();
                 for (final String id : newSingleIds) {
-                    final JSONObject newUrlData = UrlFetch.urlToJSONObject(url
-                            + "/" + id);
+                    final JSONObject newUrlData = UrlFetch.urlToJSONObject(url + "/" + id);
                     if (newUrlData != null) {
                         newObjects.add(newUrlData);
                     }

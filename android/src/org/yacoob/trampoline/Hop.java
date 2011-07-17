@@ -23,12 +23,12 @@ public final class Hop extends Application {
     static final String LOGTAG = "Trampoline";
 
     /**
-     * Regular expression used for verifying whether given String is an actual
-     * URL. There are readymade patterns in Android SDK, but they're too
-     * generic. We really want simple HTTP(s) URL here.
+     * Regular expression used for verifying whether given String is an actual URL. There are
+     * readymade patterns in Android SDK, but they're too generic. We really want simple HTTP(s) URL
+     * here.
      */
     static final Pattern URLPATTERN = Pattern
-            .compile("\\(?\\bhttp://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
+            .compile("\\(?\\bhttps?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
 
     /** Time (ms) to show complaint {@link Toast} for. */
     private static final int COMPLAINT_TIME = 3000;
@@ -111,15 +111,13 @@ public final class Hop extends Application {
     }
 
     /**
-     * Checks whether we're currently connected to the wifi network Trampoline
-     * is running in. If user has set the relevant preference to empty string,
-     * we always return true here.
+     * Checks whether we're currently connected to the wifi network Trampoline is running in. If
+     * user has set the relevant preference to empty string, we always return true here.
      * 
      * @return True if we're on home network, false otherwise.
      */
     Boolean onHomeNetwork() {
-        final SharedPreferences prefs = PreferenceManager
-                .getDefaultSharedPreferences(this);
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final String homeWifi = prefs.getString("wifiName", null);
         if (homeWifi != null && !homeWifi.isEmpty()) {
             final String currentNetwork = ((WifiManager) getSystemService(Context.WIFI_SERVICE))

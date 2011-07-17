@@ -1,15 +1,11 @@
 package org.yacoob.trampoline;
 
-import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.regex.Matcher;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 
 /**
@@ -17,9 +13,6 @@ import android.preference.PreferenceManager;
  * background. It also kills itself once push is done (or has failed).
  */
 public final class HopPushActivity extends Activity {
-
-    /** How long should a finished push announcement remain on the screen? */
-    private final int ackDelay = 2000;
 
     /** Reference to current Application object. */
     private Hop app;
@@ -62,35 +55,12 @@ public final class HopPushActivity extends Activity {
             return;
         }
 
-        // Set up dialog window.
-        final ProgressDialog dialog = new ProgressDialog(this);
-        dialog.setCancelable(false);
-        dialog.setMessage(getString(R.string.push_msg_active));
-        dialog.show();
-
-        // Work out URL at which we can push.
+        // Work out base URL.
         final SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(this);
-        final String pushUrl = prefs.getString("baseUrl", null) + "/push?url="
-                + URLEncoder.encode(sharedUrl);
+        final String pushUrl = prefs.getString("baseUrl", null) + "/push?url=";
 
         // Actually push the URL.
-        String result = getString(R.string.push_msg_done);
-        try {
-            UrlFetch.urlToString(pushUrl);
-        } catch (final IOException e) {
-            result = getString(R.string.push_msg_failed);
-        }
-        dialog.setMessage(result);
-
-        // Hide the dialog and finish activity after some delay.
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                dialog.cancel();
-                finish();
-            }
-        }, ackDelay);
+        new TaskPushUrl(this, pushUrl).execute(sharedUrl);
     }
 }
