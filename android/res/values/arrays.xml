@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="refreshFrequencyDescriptions">
+	    <item>Every 5s</item>
+	    <item>Every 5m</item>
+	    <item>Every 15m</item>
+	    <item>Every 1h</item>
+    </string-array>
+    <string-array name="refreshFrequencyValues">
+        <item>5000</item>
+        <item>300000</item>
+        <item>900000</item>
+        <item>3600000</item>
+    </string-array>
+</resources>

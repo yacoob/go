@@ -47,7 +47,7 @@ final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopLis
             final DBHelper databaseHelper) {
         listName = list;
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-        final String baseUrl = prefs.getString("baseUrl", Hop.BASEURL);
+        final String baseUrl = prefs.getString("baseUrl", "");
         url = baseUrl + "/r/" + listName;
         dbhelper = databaseHelper;
         attach(activity);
@@ -95,11 +95,6 @@ final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopLis
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.os.AsyncTask#doInBackground(Params[])
-     */
     @Override
     protected Boolean doInBackground(final String... params) {
         Boolean dataChanged = false;
@@ -172,11 +167,6 @@ final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopLis
         return dataChanged;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.os.AsyncTask#onPostExecute(java.lang.Object)
-     */
     @Override
     protected void onPostExecute(final Boolean result) {
         // In theory, this method should not be called if original activity is

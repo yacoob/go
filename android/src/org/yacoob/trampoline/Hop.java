@@ -16,11 +16,11 @@ import android.widget.Toast;
  */
 public final class Hop extends Application {
 
-    /** URL of Trampoline server. */
-    static final String BASEURL = "http://go/hop";
-
     /** Tag for Android logging. */
     static final String LOGTAG = "Trampoline";
+
+    /** How often should URL list be refreshed? */
+    static final Integer REFRESHEVERY = 5 * 1000;
 
     /**
      * Regular expression used for verifying whether given String is an actual URL. There are

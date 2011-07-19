@@ -9,19 +9,14 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 /**
- * Push activity. It consists of single progressdialog on top of translucent
- * background. It also kills itself once push is done (or has failed).
+ * Push activity. It consists of single progressdialog on top of translucent background. It also
+ * kills itself once push is done (or has failed).
  */
 public final class HopPushActivity extends Activity {
 
     /** Reference to current Application object. */
     private Hop app;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onCreate(android.os.Bundle)
-     */
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,18 +24,12 @@ public final class HopPushActivity extends Activity {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onResume()
-     */
     @Override
     protected void onResume() {
         super.onResume();
 
         // Only handle actual URLs.
-        final String sharedUrl = getIntent().getExtras().getString(
-                Intent.EXTRA_TEXT);
+        final String sharedUrl = getIntent().getExtras().getString(Intent.EXTRA_TEXT);
         final Matcher m = Hop.URLPATTERN.matcher(sharedUrl);
         if (!m.matches()) {
             app.showComplaint(getString(R.string.push_msg_not_url));
@@ -56,8 +45,7 @@ public final class HopPushActivity extends Activity {
         }
 
         // Work out base URL.
-        final SharedPreferences prefs = PreferenceManager
-                .getDefaultSharedPreferences(this);
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final String pushUrl = prefs.getString("baseUrl", null) + "/push?url=";
 
         // Actually push the URL.

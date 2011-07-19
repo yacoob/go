@@ -1,4 +1,4 @@
 * verify pause/resume behaviors for activities
 * day-based separators for list
-* background checking for urls
 * 'viewed' list
+* service-based checking for URLs when main activity isn't on?

@@ -32,8 +32,7 @@ final class DBHelper extends SQLiteOpenHelper {
     private SQLiteDatabase db;
 
     /**
-     * This exception is thrown upon application-specific problems with the
-     * database.
+     * This exception is thrown upon application-specific problems with the database.
      */
     static class DbHelperException extends Exception {
 
@@ -62,39 +61,21 @@ final class DBHelper extends SQLiteOpenHelper {
         db = getWritableDatabase();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * android.database.sqlite.SQLiteOpenHelper#onCreate(android.database.sqlite
-     * .SQLiteDatabase)
-     */
     @Override
     public void onCreate(final SQLiteDatabase database) {
-        database.execSQL("CREATE TABLE IF NOT EXISTS "
-                + STACK
-                + " ("
-                + BaseColumns._ID
+        database.execSQL("CREATE TABLE IF NOT EXISTS " + STACK + " (" + BaseColumns._ID
                 + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "url_id VARCHAR, display_url VARCHAR, pop_url VARCHAR, date VARCHAR)");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * android.database.sqlite.SQLiteOpenHelper#onUpgrade(android.database.sqlite
-     * .SQLiteDatabase, int, int)
-     */
     @Override
-    public void onUpgrade(final SQLiteDatabase database, final int oldVersion,
-            final int newVersion) {
+    public void onUpgrade(final SQLiteDatabase database, final int oldVersion, final int newVersion) {
 
     }
 
     /**
-     * Gets the actual table name. This allows decoupling actual names of tables
-     * in sqlite db from the names used by other classes to access the data.
+     * Gets the actual table name. This allows decoupling actual names of tables in sqlite db from
+     * the names used by other classes to access the data.
      * 
      * @param handle
      *            Common name of the requested table.
@@ -102,13 +83,11 @@ final class DBHelper extends SQLiteOpenHelper {
      * @throws DbHelperException
      *             When it's unable to find requested table.
      */
-    public static String getTableName(final String handle)
-            throws DbHelperException {
+    public static String getTableName(final String handle) throws DbHelperException {
         if (handle == "stack") {
             return STACK;
         } else {
-            throw new DbHelperException("There's no table assigned to: "
-                    + handle);
+            throw new DbHelperException("There's no table assigned to: " + handle);
         }
     }
 
@@ -121,11 +100,10 @@ final class DBHelper extends SQLiteOpenHelper {
      * @throws DbHelperException
      *             when it's unable to find requested table.
      */
-    public SQLiteCursor getCursorForTable(final String table)
-            throws DbHelperException {
+    public SQLiteCursor getCursorForTable(final String table) throws DbHelperException {
         final String tableName = getTableName(table);
-        final SQLiteCursor cursor = (SQLiteCursor) db.query(tableName, null,
-                null, null, null, null, "url_id DESC");
+        final SQLiteCursor cursor = (SQLiteCursor) db.query(tableName, null, null, null, null,
+                null, "url_id DESC");
         return cursor;
     }
 
@@ -196,8 +174,8 @@ final class DBHelper extends SQLiteOpenHelper {
      * @throws DbHelperException
      *             When it's unable to find requested table.
      */
-    public Boolean insertJsonObjects(final String handle,
-            final Collection<JSONObject> objects) throws DbHelperException {
+    public Boolean insertJsonObjects(final String handle, final Collection<JSONObject> objects)
+            throws DbHelperException {
         Boolean dataChanged = false;
         if (objects != null) {
             for (JSONObject data : objects) {
@@ -210,8 +188,7 @@ final class DBHelper extends SQLiteOpenHelper {
                     db.insert(getTableName(handle), null, values);
                     dataChanged = true;
                 } catch (final JSONException e) {
-                    Hop.warn("Problems parsing JSON response: "
-                            + e.getMessage());
+                    Hop.warn("Problems parsing JSON response: " + e.getMessage());
                 }
             }
         }

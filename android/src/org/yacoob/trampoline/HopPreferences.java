@@ -16,8 +16,8 @@ public final class HopPreferences extends PreferenceActivity implements
         OnSharedPreferenceChangeListener {
 
     /**
-     * Array enumerating all EditTextPreferences in this activity. We use this
-     * list for things like summaries updates.
+     * Array enumerating all EditTextPreferences in this activity. We use this list for things like
+     * summaries updates.
      */
     private static String[] editTextPrefs = {
             "baseUrl", "wifiName"
@@ -26,11 +26,6 @@ public final class HopPreferences extends PreferenceActivity implements
     /** Preferences object. */
     private SharedPreferences prefs;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.preference.PreferenceActivity#onCreate(android.os.Bundle)
-     */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,16 +38,9 @@ public final class HopPreferences extends PreferenceActivity implements
         prefs.registerOnSharedPreferenceChangeListener(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.content.SharedPreferences.OnSharedPreferenceChangeListener#
-     * onSharedPreferenceChanged(android.content.SharedPreferences,
-     * java.lang.String)
-     */
     @Override
-    public void onSharedPreferenceChanged(
-            final SharedPreferences sharedPreferences, final String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences,
+            final String key) {
 
         // Unregister as handler to avoid multiple calls on edits.
         prefs.unregisterOnSharedPreferenceChangeListener(this);
@@ -74,8 +62,7 @@ public final class HopPreferences extends PreferenceActivity implements
             final Matcher m = Hop.URLPATTERN.matcher(baseUrl);
             if (!m.matches()) {
                 final String defaultUrl = getString(R.string.DEFAULT_BASE_URL);
-                ((EditTextPreference) findPreference("baseUrl"))
-                        .setText(defaultUrl);
+                ((EditTextPreference) findPreference("baseUrl")).setText(defaultUrl);
             }
         }
 
@@ -85,13 +72,15 @@ public final class HopPreferences extends PreferenceActivity implements
     }
 
     /**
-     * Updates the summaries in activity. Too bad Android doesn't offer a
-     * convenience method to do that.
+     * Updates the summaries in activity. Too bad Android doesn't offer a convenience method to do
+     * that.
      */
     private void setSummaries() {
         for (final String key : editTextPrefs) {
             final EditTextPreference p = (EditTextPreference) findPreference(key);
             p.setSummary(prefs.getString(key, null));
         }
+
+        // TODO: add summary setting for listpreferences
     }
 }

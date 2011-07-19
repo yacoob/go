@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,11 +30,17 @@ public final class HopListActivity extends ListActivity {
     /** Database helper. */
     private DBHelper dbhelper;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onCreate(android.os.Bundle)
-     */
+    /** Refresh handler. FIXME: better descriptions */
+    private final Handler refreshHandler = new Handler();
+
+    /** Refresh callback. */
+    private final Runnable refreshCallback = new Runnable() {
+        @Override
+        public void run() {
+            refreshRinseRepeat();
+        }
+    };
+
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         app = (Hop) getApplication();
@@ -62,23 +69,18 @@ public final class HopListActivity extends ListActivity {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onResume()
-     */
     @Override
     protected void onResume() {
         super.onResume();
-        // TODO: add alarm to do this refresh on periodical basis
-        refreshUrlList();
+        refreshRinseRepeat();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onRetainNonConfigurationInstance()
-     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        refreshHandler.removeCallbacks(refreshCallback);
+    }
+
     @Override
     public Object onRetainNonConfigurationInstance() {
         if (refreshTask != null) {
@@ -87,17 +89,9 @@ public final class HopListActivity extends ListActivity {
         return refreshTask;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.ListActivity#onListItemClick(android.widget.ListView,
-     * android.view.View, int, long)
-     */
     @Override
-    public void onListItemClick(final ListView l, final View v,
-            final int position, final long id) {
-        final Cursor cursor = (Cursor) getListView()
-                .getItemAtPosition(position);
+    public void onListItemClick(final ListView l, final View v, final int position, final long id) {
+        final Cursor cursor = (Cursor) getListView().getItemAtPosition(position);
         // We're cheating here: if we know that Trampoline is not available,
         // there's no point in trying to open an URL pointing to it. Instead,
         // use target URL. It won't be popped from stack (it is located on
@@ -108,11 +102,6 @@ public final class HopListActivity extends ListActivity {
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onCreateOptionsMenu(android.view.Menu)
-     */
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
         final MenuInflater mi = getMenuInflater();
@@ -120,11 +109,6 @@ public final class HopListActivity extends ListActivity {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.app.Activity#onOptionsItemSelected(android.view.MenuItem)
-     */
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         switch (item.getItemId()) {
@@ -145,6 +129,7 @@ public final class HopListActivity extends ListActivity {
     private void refreshUrlList() {
         if (app.onHomeNetwork()) {
             if (refreshTask == null) {
+                app.showInfo(getString(R.string.msg_refresh_started));
                 refreshTask = new TaskRefreshList(this, "stack", dbhelper);
                 refreshTask.execute();
             }
@@ -154,11 +139,26 @@ public final class HopListActivity extends ListActivity {
     }
 
     /**
+     * Refreshes URL list, schedules next refresh.
+     */
+    private void refreshRinseRepeat() {
+        // Refresh list once.
+        refreshUrlList();
+
+        // Schedule next list refresh?
+        final Boolean scheduledNextRefresh = PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean("refreshLists", false);
+        // FIXME: actually use refresh period specified in preferences
+        if (scheduledNextRefresh) {
+            refreshHandler.postDelayed(refreshCallback, Hop.REFRESHEVERY);
+        }
+    }
+
+    /**
      * Callback for finishing URL list refresh.
      * 
      * @param dataChanged
-     *            Has data been modified as a result of refresh? This includes
-     *            inserts and removals.
+     *            Has data been modified as a result of refresh? This includes inserts and removals.
      * @param networkProblems
      *            Has there been network problems during refresh?
      */
@@ -181,8 +181,7 @@ public final class HopListActivity extends ListActivity {
      * Sets application offline.
      */
     private void setOffline() {
-        setTitle(getString(R.string.activity_main) + " "
-                + getString(R.string.offline_indicator));
+        setTitle(getString(R.string.activity_main) + " " + getString(R.string.offline_indicator));
         app.setOffline(true);
     }
 
