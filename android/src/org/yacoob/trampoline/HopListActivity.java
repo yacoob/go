@@ -3,12 +3,13 @@ package org.yacoob.trampoline;
 import org.yacoob.trampoline.DBHelper.DbHelperException;
 
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,22 +25,26 @@ public final class HopListActivity extends ListActivity {
     /** Application object. */
     private Hop app;
 
-    /** Reference to background AsyncTask, if present. */
-    private TaskRefreshList refreshTask;
-
     /** Database helper. */
     private DBHelper dbhelper;
 
-    /** Refresh handler. FIXME: better descriptions */
-    private final Handler refreshHandler = new Handler();
-
-    /** Refresh callback. */
-    private final Runnable refreshCallback = new Runnable() {
+    /**
+     * Data refresh handling. This BroadCastReceiver will react to broadcasts posted by service and
+     * update the lists.
+     */
+    private class RefreshWatch extends BroadcastReceiver {
         @Override
-        public void run() {
-            refreshRinseRepeat();
+        public void onReceive(final Context context, final Intent intent) {
+            Bundle extras = intent.getExtras();
+            String action = intent.getAction();
+            if (action.equals(HopRefreshService.NEWDATA_ACTION)) {
+                refreshDone(extras.getBoolean("gotNewData"), extras.getBoolean("networkProblems"));
+            }
         }
-    };
+    }
+
+    /** Single receiver to be reused during Activity lifetime. */
+    private RefreshWatch refreshWatcher = new RefreshWatch();
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -50,7 +55,7 @@ public final class HopListActivity extends ListActivity {
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         // Open database.
-        dbhelper = new DBHelper(app);
+        dbhelper = app.getDbHelper();
         SQLiteCursor urls = null;
         try {
             urls = dbhelper.getCursorForTable("stack");
@@ -61,32 +66,19 @@ public final class HopListActivity extends ListActivity {
         // Main list turn on :)
         setListAdapter(new HopSQLAdapter(this, urls));
         setContentView(R.layout.main);
-
-        // Recover background task, if there's one.
-        refreshTask = (TaskRefreshList) getLastNonConfigurationInstance();
-        if (refreshTask != null) {
-            refreshTask.attach(this);
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        refreshRinseRepeat();
+        registerReceiver(refreshWatcher, HopRefreshService.REFRESH_FILTER);
+        refreshUrlList();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        refreshHandler.removeCallbacks(refreshCallback);
-    }
-
-    @Override
-    public Object onRetainNonConfigurationInstance() {
-        if (refreshTask != null) {
-            refreshTask.detach();
-        }
-        return refreshTask;
+        unregisterReceiver(refreshWatcher);
     }
 
     @Override
@@ -128,29 +120,11 @@ public final class HopListActivity extends ListActivity {
      */
     private void refreshUrlList() {
         if (app.onHomeNetwork()) {
-            if (refreshTask == null) {
-                app.showInfo(getString(R.string.msg_refresh_started));
-                refreshTask = new TaskRefreshList(this, "stack", dbhelper);
-                refreshTask.execute();
-            }
+            final Intent intent = new Intent(this, HopRefreshService.class);
+            intent.setAction(HopRefreshService.REFRESH_MANUAL);
+            startService(intent);
         } else {
             setOffline();
-        }
-    }
-
-    /**
-     * Refreshes URL list, schedules next refresh.
-     */
-    private void refreshRinseRepeat() {
-        // Refresh list once.
-        refreshUrlList();
-
-        // Schedule next list refresh?
-        final Boolean scheduledNextRefresh = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("refreshLists", false);
-        // FIXME: actually use refresh period specified in preferences
-        if (scheduledNextRefresh) {
-            refreshHandler.postDelayed(refreshCallback, Hop.REFRESHEVERY);
         }
     }
 
@@ -162,8 +136,8 @@ public final class HopListActivity extends ListActivity {
      * @param networkProblems
      *            Has there been network problems during refresh?
      */
-    void refreshDone(final Boolean dataChanged, final Exception networkProblems) {
-        if (networkProblems != null) {
+    void refreshDone(final Boolean dataChanged, final Boolean networkProblems) {
+        if (networkProblems) {
             setOffline();
             app.showComplaint(getString(R.string.fetch_failed));
         } else {
@@ -174,7 +148,6 @@ public final class HopListActivity extends ListActivity {
             final SQLiteCursor cursor = (SQLiteCursor) adapter.getCursor();
             cursor.requery();
         }
-        refreshTask = null;
     }
 
     /**

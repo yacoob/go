@@ -39,6 +39,17 @@ public final class Hop extends Application {
     /** Offline indicator. */
     private Boolean appOffline = false;
 
+    /** Database helper. */
+    private DBHelper dbhelper;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // Interesting: 'this' can't be used as proper Context for DBHelper during Application
+        // object initialization. As a result, we do this in onCreate instead.
+        dbhelper = new DBHelper(this);
+    }
+
     /**
      * Logs a debug message.
      * 
@@ -108,6 +119,16 @@ public final class Hop extends Application {
      */
     public void setOffline(final Boolean newState) {
         appOffline = newState;
+    }
+
+    /**
+     * Returns database helper. One such object is created on Application object creation and shared
+     * among different users across whole application.
+     * 
+     * @return DBHelper object.
+     */
+    public DBHelper getDbHelper() {
+        return dbhelper;
     }
 
     /**

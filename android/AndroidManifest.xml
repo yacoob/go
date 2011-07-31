@@ -21,5 +21,12 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+        <receiver android:exported="true" android:enabled="false" android:name=".HopWifiHandler">
+            <intent-filter>
+                <action android:name="android.net.wifi.STATE_CHANGE"/>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+            </intent-filter>
+        </receiver>
+        <service android:name=".HopRefreshService"/>
     </application>
 </manifest>

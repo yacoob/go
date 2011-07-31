@@ -13,44 +13,91 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.yacoob.trampoline.DBHelper.DbHelperException;
 
+import android.app.IntentService;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 /**
- * AsyncTask implementing URL list refresh.
+ * This IntentService downloads new data from Trampoline server and updates local database with it.
+ * 
  */
-final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopListActivity> {
+public final class HopRefreshService extends IntentService {
 
-    /** Base URL for Trampoline server. */
-    private final String url;
+    /** Intent filter for catching new data event. */
+    protected static final IntentFilter REFRESH_FILTER = new IntentFilter(
+            HopRefreshService.NEWDATA_ACTION);
 
-    /** List to update. */
-    private final String listName;
+    /** Names of actions that this service accepts and sends out. */
+    /** Automatic (scheduled) refresh action. */
+    protected static final String REFRESH_ACTION = "org.yacoob.refreshData";
+    /** Manual refresh action. It will always report back, even if there was no new data. */
+    protected static final String REFRESH_MANUAL = "org.yacoob.refreshDataManual";
+    /** Broadcast action notifying about availability of new data. */
+    protected static final String NEWDATA_ACTION = "org.yacoob.newDataForList";
+
+    /** Application object. */
+    private Hop app;
 
     /** Database helper. */
-    private final DBHelper dbhelper;
+    private DBHelper dbhelper;
 
-    /** Stores any exception that might have happened during the refresh. */
-    private Exception netProblems;
+    /** Base URL for REST interface. */
+    private String url;
+
+    /** User preferences. */
+    private SharedPreferences prefs;
+
+    /** Constructor. */
+    public HopRefreshService() {
+        super("HopRefreshService");
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        app = (Hop) getApplication();
+        dbhelper = app.getDbHelper();
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        url = prefs.getString("baseUrl", "") + "/r/";
+    }
+
+    @Override
+    protected void onHandleIntent(final Intent intent) {
+        if (app.onHomeNetwork()) {
+            final String action = intent.getAction();
+            if (action.equals(REFRESH_ACTION)) {
+                checkForNewData(false);
+            } else if (action.equals(REFRESH_MANUAL)) {
+                checkForNewData(true);
+            }
+        }
+    }
 
     /**
-     * Constructor. Associates freshly created task with activity that created it.
+     * Queries server, updates local database with changed data. Broadcasts notification if there's
+     * been any change.
      * 
-     * @param activity
-     *            Activity launching this task.
-     * @param list
-     *            Name of the URL list to update.
-     * @param databaseHelper
-     *            Reference to database helper.
+     * @param reportNoData
+     *            If true, this function will always send a broadcast with result of the refresh.
      */
-    TaskRefreshList(final HopListActivity activity, final String list, //
-            final DBHelper databaseHelper) {
-        listName = list;
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-        final String baseUrl = prefs.getString("baseUrl", "");
-        url = baseUrl + "/r/" + listName;
-        dbhelper = databaseHelper;
-        attach(activity);
+    private void checkForNewData(final Boolean reportNoData) {
+        Boolean gotNewData = false;
+        Boolean networkProblems = false;
+        try {
+            gotNewData |= getNewDataForList("stack");
+        } catch (final IOException e) {
+            networkProblems = true;
+        }
+        if (gotNewData || reportNoData) {
+            final Intent intent = new Intent();
+            intent.setAction(NEWDATA_ACTION);
+            intent.putExtra("listName", "stack");
+            intent.putExtra("gotNewData", gotNewData);
+            intent.putExtra("networkProblems", networkProblems);
+            sendBroadcast(intent);
+        }
     }
 
     /**
@@ -72,7 +119,7 @@ final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopLis
         if (object == null) {
             return null;
         } else {
-            final HashSet<T> set = new HashSet<T>();
+            final Set<T> set = new HashSet<T>();
             try {
                 if (arrayName != null) {
                     final JSONArray source = object.getJSONArray(arrayName);
@@ -95,18 +142,27 @@ final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopLis
         }
     }
 
-    @Override
-    protected Boolean doInBackground(final String... params) {
+    /**
+     * Queries Trampoline server about specific list.
+     * 
+     * @param listName
+     *            Name of the list to query.
+     * @return true if any data has been changed (added/removed), false otherwise.
+     * @throws IOException
+     *             on network problems.
+     */
+    Boolean getNewDataForList(final String listName) throws IOException {
         Boolean dataChanged = false;
+        final String listUrl = url + listName;
 
         // Check for URLs newer than our latest item.
         try {
             String fetchUrl = null;
             if (dbhelper.getUrlCount(listName) == 0) {
-                fetchUrl = url + "/" + URLEncoder.encode("*");
+                fetchUrl = listUrl + "/" + URLEncoder.encode("*");
             } else {
                 final String latestId = dbhelper.getNewestUrlId(listName);
-                fetchUrl = url + "/" + URLEncoder.encode(">") + latestId;
+                fetchUrl = listUrl + "/" + URLEncoder.encode(">") + latestId;
             }
 
             JSONObject newUrlsJson = null;
@@ -132,7 +188,7 @@ final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopLis
             // account for any holes Android client might have. Usually this
             // doesn't happen, but we might end up in half-updated state after a
             // crash.
-            final JSONObject remoteUrlsJson = UrlFetch.urlToJSONObject(url);
+            final JSONObject remoteUrlsJson = UrlFetch.urlToJSONObject(listUrl);
             final Set<String> remoteIds = extractFromJson(remoteUrlsJson, listName);
             final Set<String> localIds = dbhelper.getUrlIds(listName);
 
@@ -149,36 +205,18 @@ final class TaskRefreshList extends DetachableTask<String, Void, Boolean, HopLis
             if (newSingleIds.size() != 0) {
                 final Set<JSONObject> newObjects = new HashSet<JSONObject>();
                 for (final String id : newSingleIds) {
-                    final JSONObject newUrlData = UrlFetch.urlToJSONObject(url + "/" + id);
+                    final JSONObject newUrlData = UrlFetch.urlToJSONObject(listUrl + "/" + id);
                     if (newUrlData != null) {
                         newObjects.add(newUrlData);
                     }
                 }
                 dataChanged |= dbhelper.insertJsonObjects(listName, newObjects);
             }
-        } catch (final IOException e) {
-            netProblems = e;
-            return dataChanged;
         } catch (final DbHelperException e) {
             Hop.warn("Database problems during refresh: " + e.getMessage());
             dataChanged = false;
             return dataChanged;
         }
         return dataChanged;
-    }
-
-    @Override
-    protected void onPostExecute(final Boolean result) {
-        // In theory, this method should not be called if original activity is
-        // dead. In practice, let's check this.
-        final HopListActivity parent = getParentActivity();
-        if (parent != null) {
-            // "Cave Johnson - we're done here." :)
-            parent.refreshDone(result, netProblems);
-            detach();
-        } else {
-            // Yes, This Should Not Happen [tm].
-            Hop.warn("onPostExecute called without parent activity.");
-        }
     }
 }
