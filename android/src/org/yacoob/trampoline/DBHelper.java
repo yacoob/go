@@ -175,9 +175,9 @@ final class DBHelper extends SQLiteOpenHelper {
      * @throws DbHelperException
      *             When it's unable to find requested table.
      */
-    public Boolean insertJsonObjects(final String handle, final Collection<JSONObject> objects)
+    public int insertJsonObjects(final String handle, final Collection<JSONObject> objects)
             throws DbHelperException {
-        Boolean dataChanged = false;
+        int newItemsCount = 0;
         if (objects != null) {
             for (JSONObject data : objects) {
                 final ContentValues values = new ContentValues();
@@ -187,13 +187,13 @@ final class DBHelper extends SQLiteOpenHelper {
                     values.put("pop_url", data.getString("pop_url"));
                     values.put("date", data.getString("date"));
                     db.insert(getTableName(handle), null, values);
-                    dataChanged = true;
+                    newItemsCount += 1;
                 } catch (final JSONException e) {
                     Hop.warn("Problems parsing JSON response: " + e.getMessage());
                 }
             }
         }
-        return dataChanged;
+        return newItemsCount;
     }
 
     /**

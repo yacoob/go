@@ -18,10 +18,11 @@
 	    android:summaryOff="@string/prefs_refresh_off"
 	    android:summaryOn="@string/prefs_refresh_on"
 	    android:disableDependentsState="false"/>
-<!--     <ListPreference
+    <ListPreference
         android:key="refreshFrequency"
         android:title="@string/prefs_refresh_frequency"
+        android:defaultValue="3600000"
         android:entries="@array/refreshFrequencyDescriptions"
         android:entryValues="@array/refreshFrequencyValues"
         android:dependency="refreshLists"/>
- --></PreferenceScreen>
+</PreferenceScreen>

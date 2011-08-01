@@ -13,10 +13,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.yacoob.trampoline.DBHelper.DbHelperException;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 /**
@@ -32,10 +35,15 @@ public final class HopRefreshService extends IntentService {
     /** Names of actions that this service accepts and sends out. */
     /** Automatic (scheduled) refresh action. */
     protected static final String REFRESH_ACTION = "org.yacoob.refreshData";
-    /** Manual refresh action. It will always report back, even if there was no new data. */
-    protected static final String REFRESH_MANUAL = "org.yacoob.refreshDataManual";
     /** Broadcast action notifying about availability of new data. */
     protected static final String NEWDATA_ACTION = "org.yacoob.newDataForList";
+    /** Preference change action. Used to reschedule refreshes. */
+    protected static final String RESTART_REFRESH_ACTION = "org.yacoob.prefsChanged";
+    /** Stop automatic refresh action. Used to stop automatic background refreshes of data. */
+    protected static final String CANCEL_REFRESH_ACTION = "org.yacoob.cancelAutomaticRefresh";
+
+    /** Flag indicating whether there's already an alarm set up for next refresh. */
+    private static Boolean refreshScheduled = false;
 
     /** Application object. */
     private Hop app;
@@ -68,35 +76,79 @@ public final class HopRefreshService extends IntentService {
         if (app.onHomeNetwork()) {
             final String action = intent.getAction();
             if (action.equals(REFRESH_ACTION)) {
-                checkForNewData(false);
-            } else if (action.equals(REFRESH_MANUAL)) {
-                checkForNewData(true);
+                checkForNewData();
+            } else if (action.equals(RESTART_REFRESH_ACTION)) {
+                setupAutomaticRefresh(true);
+            } else if (action.equals(CANCEL_REFRESH_ACTION)) {
+                stopAutomaticRefresh();
             }
+        } else {
+            Hop.debug("Zzz. Not on home network, won't do anything.");
+        }
+    }
+
+    /**
+     * Set up alarms for recurring refresh.
+     * 
+     * @param reset
+     *            If true, cancel already existing alarms first.
+     */
+    protected void setupAutomaticRefresh(final Boolean reset) {
+        if (reset) {
+            stopAutomaticRefresh();
+        }
+        if (!refreshScheduled) {
+            Hop.debug("Setting up continuous refresh.");
+            final Intent i = new Intent(app, HopRefreshService.class);
+            i.setAction(HopRefreshService.REFRESH_ACTION);
+            final PendingIntent pi = PendingIntent.getService(app, -1, i, 0);
+            final AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            // FIXME: use RTC_WAKEUP instead.
+            final long period = Long.parseLong(prefs.getString("refreshFrequency", null));
+            am.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis() + period, period,
+                    pi);
+            refreshScheduled = true;
+        }
+    }
+
+    /**
+     * Removes alarms for recurring refresh.
+     */
+    protected void stopAutomaticRefresh() {
+        if (refreshScheduled) {
+            Hop.debug("Removing continuous refresh.");
+            final Intent i = new Intent(getApplicationContext(), HopRefreshService.class);
+            i.setAction(HopRefreshService.REFRESH_ACTION);
+            final PendingIntent pi = PendingIntent.getService(app, -1, i, 0);
+            final AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            am.cancel(pi);
+            refreshScheduled = false;
         }
     }
 
     /**
      * Queries server, updates local database with changed data. Broadcasts notification if there's
      * been any change.
-     * 
-     * @param reportNoData
-     *            If true, this function will always send a broadcast with result of the refresh.
      */
-    private void checkForNewData(final Boolean reportNoData) {
-        Boolean gotNewData = false;
+    private void checkForNewData() {
+        Hop.debug("Checking for new data.");
+        final Bundle b = new Bundle();
         Boolean networkProblems = false;
         try {
-            gotNewData |= getNewDataForList("stack");
+            b.putAll(getNewDataForList("stack"));
         } catch (final IOException e) {
             networkProblems = true;
         }
-        if (gotNewData || reportNoData) {
+        if (b.getBoolean("dataModified")) {
             final Intent intent = new Intent();
             intent.setAction(NEWDATA_ACTION);
+            intent.putExtras(b);
             intent.putExtra("listName", "stack");
-            intent.putExtra("gotNewData", gotNewData);
             intent.putExtra("networkProblems", networkProblems);
             sendBroadcast(intent);
+        }
+        if (!refreshScheduled && prefs.getBoolean("refreshLists", false)) {
+            setupAutomaticRefresh(false);
         }
     }
 
@@ -151,8 +203,9 @@ public final class HopRefreshService extends IntentService {
      * @throws IOException
      *             on network problems.
      */
-    Boolean getNewDataForList(final String listName) throws IOException {
-        Boolean dataChanged = false;
+    Bundle getNewDataForList(final String listName) throws IOException {
+        int newItemsCount = 0;
+        Boolean dataModified = false;
         final String listUrl = url + listName;
 
         // Check for URLs newer than our latest item.
@@ -181,7 +234,7 @@ public final class HopRefreshService extends IntentService {
             if (newUrlsPresent) {
                 // Extract JSONObjects from newUrlsJson, add all of them to db
                 final Set<JSONObject> newUrls = extractFromJson(newUrlsJson, null);
-                dataChanged |= dbhelper.insertJsonObjects(listName, newUrls);
+                newItemsCount += dbhelper.insertJsonObjects(listName, newUrls);
             }
 
             // Fetch list of all remote URL ids, compare to local one. This will
@@ -196,7 +249,7 @@ public final class HopRefreshService extends IntentService {
             final Set<String> deletedIds = new HashSet<String>(localIds);
             deletedIds.removeAll(remoteIds);
             if (deletedIds.size() != 0) {
-                dataChanged |= dbhelper.removeIds(listName, deletedIds);
+                dataModified |= dbhelper.removeIds(listName, deletedIds);
             }
 
             // Iterate over remote-local, fetch one by one.
@@ -210,13 +263,17 @@ public final class HopRefreshService extends IntentService {
                         newObjects.add(newUrlData);
                     }
                 }
-                dataChanged |= dbhelper.insertJsonObjects(listName, newObjects);
+                newItemsCount += dbhelper.insertJsonObjects(listName, newObjects);
             }
         } catch (final DbHelperException e) {
             Hop.warn("Database problems during refresh: " + e.getMessage());
-            dataChanged = false;
-            return dataChanged;
+            newItemsCount = 0;
+            dataModified = false;
         }
-        return dataChanged;
+        final Bundle b = new Bundle();
+        dataModified |= newItemsCount > 0 ? true : false;
+        b.putInt("newItemsCount", newItemsCount);
+        b.putBoolean("dataModified", dataModified);
+        return b;
     }
 }

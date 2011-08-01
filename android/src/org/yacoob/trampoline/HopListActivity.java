@@ -10,7 +10,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,7 +37,7 @@ public final class HopListActivity extends ListActivity {
             Bundle extras = intent.getExtras();
             String action = intent.getAction();
             if (action.equals(HopRefreshService.NEWDATA_ACTION)) {
-                refreshDone(extras.getBoolean("gotNewData"), extras.getBoolean("networkProblems"));
+                refreshDone(extras);
             }
         }
     }
@@ -50,9 +49,6 @@ public final class HopListActivity extends ListActivity {
     public void onCreate(final Bundle savedInstanceState) {
         app = (Hop) getApplication();
         super.onCreate(savedInstanceState);
-
-        // Set default values for preferences.
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         // Open database.
         dbhelper = app.getDbHelper();
@@ -121,7 +117,7 @@ public final class HopListActivity extends ListActivity {
     private void refreshUrlList() {
         if (app.onHomeNetwork()) {
             final Intent intent = new Intent(this, HopRefreshService.class);
-            intent.setAction(HopRefreshService.REFRESH_MANUAL);
+            intent.setAction(HopRefreshService.REFRESH_ACTION);
             startService(intent);
         } else {
             setOffline();
@@ -131,19 +127,17 @@ public final class HopListActivity extends ListActivity {
     /**
      * Callback for finishing URL list refresh.
      * 
-     * @param dataChanged
-     *            Has data been modified as a result of refresh? This includes inserts and removals.
-     * @param networkProblems
-     *            Has there been network problems during refresh?
+     * @param b
+     *            Bundle of extras received from service.
      */
-    void refreshDone(final Boolean dataChanged, final Boolean networkProblems) {
-        if (networkProblems) {
+    void refreshDone(final Bundle b) {
+        if (b.getBoolean("networkProblems")) {
             setOffline();
             app.showComplaint(getString(R.string.fetch_failed));
         } else {
             setOnline();
         }
-        if (dataChanged) {
+        if (b.getBoolean("dataModified")) {
             final HopSQLAdapter adapter = (HopSQLAdapter) getListAdapter();
             final SQLiteCursor cursor = (SQLiteCursor) adapter.getCursor();
             cursor.requery();

@@ -2,10 +2,13 @@ package org.yacoob.trampoline;
 
 import java.util.regex.Matcher;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
+import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
@@ -16,11 +19,17 @@ public final class HopPreferences extends PreferenceActivity implements
         OnSharedPreferenceChangeListener {
 
     /**
-     * Array enumerating all EditTextPreferences in this activity. We use this list for things like
-     * summaries updates.
+     * Array enumerating all EditTextPreferences in this activity. It's used for summaries updates.
      */
     private static String[] editTextPrefs = {
             "baseUrl", "wifiName"
+    };
+
+    /**
+     * Array enumerating all ListPreferences in this activity. It's used for summaries updates.
+     */
+    private static String[] listPrefs = {
+        "refreshFrequency",
     };
 
     /** Preferences object. */
@@ -31,7 +40,6 @@ public final class HopPreferences extends PreferenceActivity implements
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.preferences);
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         setSummaries();
@@ -66,6 +74,24 @@ public final class HopPreferences extends PreferenceActivity implements
             }
         }
 
+        // Check whether service is running, change its state according to user preferences.
+        if (key.equals("refreshLists")) {
+            final Intent intent = new Intent(this, HopRefreshService.class);
+            if (prefs.getBoolean("refreshLists", false)) {
+                intent.setAction(HopRefreshService.RESTART_REFRESH_ACTION);
+            } else {
+                intent.setAction(HopRefreshService.CANCEL_REFRESH_ACTION);
+            }
+            startService(intent);
+        }
+
+        // Check whether frequency of data refreshes need to be adjusted.
+        if (key.equals("refreshFrequency")) {
+            final Intent intent = new Intent(this, HopRefreshService.class);
+            intent.setAction(HopRefreshService.RESTART_REFRESH_ACTION);
+            startService(intent);
+        }
+
         // Set summaries on prefs screen, re-register as handler.
         setSummaries();
         prefs.registerOnSharedPreferenceChangeListener(this);
@@ -77,10 +103,13 @@ public final class HopPreferences extends PreferenceActivity implements
      */
     private void setSummaries() {
         for (final String key : editTextPrefs) {
-            final EditTextPreference p = (EditTextPreference) findPreference(key);
+            final Preference p = findPreference(key);
             p.setSummary(prefs.getString(key, null));
         }
 
-        // TODO: add summary setting for listpreferences
+        for (final String key : listPrefs) {
+            final ListPreference p = (ListPreference) findPreference(key);
+            p.setSummary(p.getEntry());
+        }
     }
 }

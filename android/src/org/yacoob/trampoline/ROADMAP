@@ -1,4 +1,5 @@
 * verify pause/resume behaviors for activities
 * day-based separators for list
 * 'viewed' list
-* service-based checking for URLs when main activity isn't on?
+* optional notification about new data when activity isn't present.
+* s/RTC/RTC_WAKE/?

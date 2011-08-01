@@ -21,7 +21,6 @@ public final class HopPushActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = (Hop) getApplication();
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }
 
     @Override

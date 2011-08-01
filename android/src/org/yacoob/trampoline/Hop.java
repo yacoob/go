@@ -19,9 +19,6 @@ public final class Hop extends Application {
     /** Tag for Android logging. */
     static final String LOGTAG = "Trampoline";
 
-    /** How often should URL list be refreshed? */
-    static final Integer REFRESHEVERY = 5 * 1000;
-
     /**
      * Regular expression used for verifying whether given String is an actual URL. There are
      * readymade patterns in Android SDK, but they're too generic. We really want simple HTTP(s) URL
@@ -48,6 +45,8 @@ public final class Hop extends Application {
         // Interesting: 'this' can't be used as proper Context for DBHelper during Application
         // object initialization. As a result, we do this in onCreate instead.
         dbhelper = new DBHelper(this);
+        // Set default values for preferences, if they haven't been set by user yet.
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }
 
     /**
