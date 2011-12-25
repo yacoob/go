@@ -73,20 +73,18 @@ public final class HopRefreshService extends IntentService {
 
     @Override
     protected void onHandleIntent(final Intent intent) {
-        if (app.onHomeNetwork()) {
-            final String action = intent.getAction();
-            if (action.equals(REFRESH_ACTION)) {
-                checkForNewData();
-            } else if (action.equals(RESTART_REFRESH_ACTION)) {
-                setupAutomaticRefresh(true);
-            } else if (action.equals(CANCEL_REFRESH_ACTION)) {
-                stopAutomaticRefresh();
-            }
-        } else {
-            Hop.debug("Zzz. Not on home network, won't do anything.");
+        final String action = intent.getAction();
+        final Boolean onHomeNetwork = app.onHomeNetwork();
+        if (action.equals(REFRESH_ACTION) && onHomeNetwork) {
+            checkForNewData();
+        } else if (action.equals(RESTART_REFRESH_ACTION) && onHomeNetwork) {
+            setupAutomaticRefresh(true);
+        } else if (action.equals(CANCEL_REFRESH_ACTION)) {
+            stopAutomaticRefresh();
         }
     }
 
+    // FIXME: should only those two functions handle preferences?
     /**
      * Set up alarms for recurring refresh.
      * 
@@ -98,7 +96,7 @@ public final class HopRefreshService extends IntentService {
             stopAutomaticRefresh();
         }
         if (!refreshScheduled) {
-            Hop.debug("Setting up continuous refresh.");
+            Hop.debug("Starting up continuous refresh.");
             final Intent i = new Intent(app, HopRefreshService.class);
             i.setAction(HopRefreshService.REFRESH_ACTION);
             final PendingIntent pi = PendingIntent.getService(app, -1, i, 0);
@@ -116,7 +114,7 @@ public final class HopRefreshService extends IntentService {
      */
     protected void stopAutomaticRefresh() {
         if (refreshScheduled) {
-            Hop.debug("Removing continuous refresh.");
+            Hop.debug("Shutting down continuous refresh.");
             final Intent i = new Intent(getApplicationContext(), HopRefreshService.class);
             i.setAction(HopRefreshService.REFRESH_ACTION);
             final PendingIntent pi = PendingIntent.getService(app, -1, i, 0);

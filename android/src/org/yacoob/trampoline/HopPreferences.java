@@ -74,6 +74,8 @@ public final class HopPreferences extends PreferenceActivity implements
             }
         }
 
+        // TODO: handle home network change (refresh)
+
         // Check whether service is running, change its state according to user preferences.
         if (key.equals("refreshLists")) {
             final Intent intent = new Intent(this, HopRefreshService.class);

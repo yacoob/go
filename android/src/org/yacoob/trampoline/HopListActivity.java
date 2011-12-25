@@ -148,6 +148,8 @@ public final class HopListActivity extends ListActivity {
      * Sets application offline.
      */
     private void setOffline() {
+        // FIXME: this actually gets "sticky" if you go off home network, then back, and there are
+        // no updates.
         setTitle(getString(R.string.activity_main) + " " + getString(R.string.offline_indicator));
         app.setOffline(true);
     }
