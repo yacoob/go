@@ -11,7 +11,7 @@ setup(
     author_email='yacoob@gmail.com',
     url='http://github.com/yacoob/go',
 
-    install_requires=['bottle>=0.9,<0.10'],
+    install_requires=['bottle>=0.10'],
 
     packages=['go'],
     package_data={

@@ -27,7 +27,7 @@ def listShortcuts(db):
     }
     return template('go_list', **kwargs)
 
-@app.route('/:shortcut#[^&?/*]+#')
+@app.route('/<shortcut:re:[^&?/*]+>')
 def handleShortcut(shortcut, db):
     if (db.has_key(shortcut)):
         # if redirect already exist, just go there

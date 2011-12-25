@@ -19,21 +19,21 @@ root = bottle.Bottle()
 def index():
     bottle.redirect('/and/list')
 
-@root.route('/:shortcut#[^&?/*]+#*')
+@root.route('/<shortcut:re:[^&?/*]+>*')
 def go_edit_that(shortcut):
     url = '/and/edit' + '?' + urllib.urlencode({'short': shortcut})
     bottle.redirect(url)
 
-@root.route('/:shortcut#[^&?/*]+#')
+@root.route('/<shortcut:re:[^&?/*]+>')
 def go_there(shortcut):
-    # FIXME: This is suboptimal. It should be possible to route request 
+    # FIXME: This is suboptimal. It should be possible to route request
     # for handling to another application.
     # https://github.com/defnull/bottle/issues/168
     bottle.redirect('/and/' + shortcut)
 
-@root.route('/static/:filename')
-def static_file(filename, app):
-    bottle.send_file(filename, root=app['static_dir'])
+@root.route('/static/<filename>')
+def send_file(filename, app):
+    return bottle.static_file(filename, root=app['static_dir'])
 
 def initFromCmdLine():
     app = {}
