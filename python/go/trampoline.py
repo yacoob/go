@@ -4,23 +4,44 @@
 
 """ Trampoline module."""
 
+from BeautifulSoup import BeautifulSoup
 from bottle import abort, Bottle, request, template, redirect, response
 from bottle.ext import sqlite as bottle_sqlite
 from datetime import datetime
 from email.utils import formatdate
+from multiprocessing import Lock, Process, Queue
+from os import getpid
+from sqlite3 import connect as sqlite3_connect
 from time import time
+from urllib import urlopen
 from urlparse import urlunsplit
-import sqlite3
-import threading
-
 
 app = Bottle()
-app.timestamp_lock = threading.Lock()
+app.timestamp_lock = Lock()
+app.queue = Queue()
+
+
+def fetcher(queue, filename):
+    """ Run in loop, listen for new URLs, fetch them, work out the title, update
+    db."""
+    print 'Fetcher process started as pid <%s>' % getpid()
+    while True:
+        (timestamp, url) = queue.get()
+        try:
+            soup = BeautifulSoup(urlopen(url), convertEntities=BeautifulSoup.HTML_ENTITIES)
+            title = soup.title.string
+        except AttributeError:
+            continue
+        c = sqlite3_connect(filename)
+        c.execute('UPDATE stack SET description = ? WHERE timestamp = ?',
+                (title, timestamp))
+        c.commit()
+        c.close()
 
 
 def provisionDbs(filename):
     """ Set up database, creating tables if needed."""
-    c = sqlite3.connect(filename)
+    c = sqlite3_connect(filename)
     c.executescript('''
 CREATE TABLE IF NOT EXISTS
 stack(timestamp TEXT PRIMARY KEY, url TEXT, description TEXT);
@@ -29,6 +50,9 @@ viewed(timestamp TEXT PRIMARY KEY, url TEXT, description TEXT);
 ''')
     c.close()
     app.install(bottle_sqlite.Plugin(dbfile=filename, keyword='db'))
+    if not hasattr(app, 'FetcherProcess'):
+        app.FetcherProcess = Process(target=fetcher, args=(app.queue, filename))
+        app.FetcherProcess.start()
 
 
 def _describeUrl(row, pop_url_base=None, rss=False):
@@ -77,9 +101,11 @@ def pushUrl(db):
     url = request.params.get('url', None)
     if url:
         app.timestamp_lock.acquire()
-        db.execute('INSERT INTO stack(timestamp, url) VALUES(?, ?)',
-                ('%.3f' % time(), url))
+        timestamp = '%.3f' % time()
         app.timestamp_lock.release()
+        db.execute('INSERT INTO stack(timestamp, url) VALUES(?, ?)',
+                (timestamp, url))
+        app.queue.put((timestamp, url))
         return template('hop_msg', title='- trampoline push succeeded', url=url)
     else:
         redirect(app.get_url('list'))
@@ -192,4 +218,4 @@ if __name__ == '__main__':
     bottle.debug(True)
     bottle.default_app().mount(app, '/hop')
     provisionDbs('/tmp/trampoline.db')
-    bottle.run(reloader=True)
+    bottle.run(reloader=False)
