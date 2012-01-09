@@ -9,50 +9,59 @@ from bottle import abort, Bottle, request, template, redirect, response
 from bottle.ext import sqlite as bottle_sqlite
 from datetime import datetime
 from email.utils import formatdate
-from multiprocessing import Lock, Process, Queue
+from hashlib import sha1
+from multiprocessing import Lock, Process, Event
 from os import getpid
-from sqlite3 import connect as sqlite3_connect
 from time import time
-from urllib import urlopen
+from urllib import urlopen, urlencode
 from urlparse import urlunsplit
+from uuid import uuid4
+import sqlite3
+
 
 app = Bottle()
 app.timestamp_lock = Lock()
-app.queue = Queue()
+app.fetcher_flag = Event()
 
 
-def fetcher(queue, filename):
-    """ Run in loop, listen for new URLs, fetch them, work out the title, update
-    db."""
+def fetcher(filename, base_url, event):
+    """ Fetch titles for all enqueued URls, update db."""
     print 'Fetcher process started as pid <%s>' % getpid()
-    while True:
-        (timestamp, url) = queue.get()
-        try:
-            soup = BeautifulSoup(urlopen(url), convertEntities=BeautifulSoup.HTML_ENTITIES)
-            title = soup.title.string
-        except AttributeError:
-            continue
-        c = sqlite3_connect(filename)
-        c.execute('UPDATE stack SET description = ? WHERE timestamp = ?',
-                (title, timestamp))
-        c.commit()
-        c.close()
+    tables = ('stack', 'viewed')
+    c = sqlite3.connect(filename)
+    c.row_factory = sqlite3.Row
+    while event.is_set():
+        event.clear()
+        for table in tables:
+            rows = c.execute('SELECT * FROM ' + table + ' WHERE token IS NOT NULL').fetchall()
+            for row in rows:
+                url = row['url']
+                try:
+                    soup = BeautifulSoup(urlopen(url), convertEntities=BeautifulSoup.HTML_ENTITIES)
+                    title = soup.title.string
+                    describe_url = ''.join([base_url, '?', urlencode({
+                        'list_id': table,
+                        'token': row['token'],
+                        'description': title,
+                    })])
+                    urlopen(describe_url)
+                except:
+                    continue
+    c.close()
 
 
 def provisionDbs(filename):
     """ Set up database, creating tables if needed."""
-    c = sqlite3_connect(filename)
+    c = sqlite3.connect(filename)
     c.executescript('''
 CREATE TABLE IF NOT EXISTS
-stack(timestamp TEXT PRIMARY KEY, url TEXT, description TEXT);
+stack(timestamp TEXT PRIMARY KEY, url TEXT, description TEXT, token TEXT);
 CREATE TABLE IF NOT EXISTS
-viewed(timestamp TEXT PRIMARY KEY, url TEXT, description TEXT);
+viewed(timestamp TEXT PRIMARY KEY, url TEXT, description TEXT, token TEXT);
 ''')
     c.close()
+    app.db_filename = filename
     app.install(bottle_sqlite.Plugin(dbfile=filename, keyword='db'))
-    if not hasattr(app, 'FetcherProcess'):
-        app.FetcherProcess = Process(target=fetcher, args=(app.queue, filename))
-        app.FetcherProcess.start()
 
 
 def _describeUrl(row, pop_url_base=None, rss=False):
@@ -100,12 +109,23 @@ def pushUrl(db):
     """ Accept new URL, place it on top of stack."""
     url = request.params.get('url', None)
     if url:
+        url = url.decode('utf-8')
         app.timestamp_lock.acquire()
         timestamp = '%.3f' % time()
         app.timestamp_lock.release()
-        db.execute('INSERT INTO stack(timestamp, url) VALUES(?, ?)',
-                (timestamp, url))
-        app.queue.put((timestamp, url))
+        token = uuid4().hex
+        db.execute('INSERT INTO stack(timestamp, url, token) VALUES(?, ?, ?)',
+                (timestamp, url, token))
+        app.fetcher_flag.set()
+        if not (hasattr(app, 'FetcherProcess') and
+                app.FetcherProcess.is_alive()):
+            db.commit()
+            base_url = ''.join([
+                urlunsplit(request.urlparts[0:2] + ('', '', '')),
+                app.get_url('restDescribe')])
+            app.FetcherProcess = Process(target=fetcher,
+                args=(app.db_filename, base_url, app.fetcher_flag))
+            app.FetcherProcess.start()
         return template('hop_msg', title='- trampoline push succeeded', url=url)
     else:
         redirect(app.get_url('list'))
@@ -167,6 +187,17 @@ def showRss(db):
     }
     response.content_type = 'text/xml'
     return template('hop_rss', **kwargs)
+
+
+@app.route('/r/describe', name='restDescribe')
+def restSetDescription(db):
+    list_id = request.params.get('list_id')
+    auth_token = request.params.get('token')
+    description = request.params.get('description')
+    if not (auth_token and description):
+        abort(404)
+    db.execute('UPDATE ' + list_id + ' SET description = ?, token = NULL WHERE token = ?', (description.decode('utf-8'), auth_token))
+    return 'OK'
 
 
 @app.route('/r/<list_id:re:(?:stack|viewed)>')

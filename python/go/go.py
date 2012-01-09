@@ -123,7 +123,7 @@ def run(app):
         daemonize()
 
 
-    trampoline.provisionDbs(app['db_dir'] + '/hop.db', app['db_dir'] + '/hop_old.db')
+    trampoline.provisionDbs(app['db_dir'] + '/trampoline.db')
     redirector.provisionDbs(app['db_dir'] + '/and.db')
 
     root.mount(trampoline.app, '/hop')

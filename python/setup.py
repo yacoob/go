@@ -6,12 +6,12 @@ from glob import glob
 setup(
     name='go',
     description='URL redirector with a twist',
-    version='0.23',
+    version='0.29',
     author='Jakub Turski',
     author_email='yacoob@gmail.com',
     url='http://github.com/yacoob/go',
 
-    install_requires=['bottle>=0.10'],
+    install_requires=['bottle>=0.10', 'BeautifulSoup', 'chardet'],
 
     packages=['go'],
     package_data={
