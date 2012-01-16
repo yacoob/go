@@ -1,70 +1,72 @@
 #!/usr/bin/env python
 # coding: utf-8
-# pylint: disable-msg=E0611
+# pylint: disable-msg=C0103
 
-from pkg_resources import resource_filename #@UnresolvedImport
+""" Main module."""
+
+from optparse import OptionParser, make_option
+from pkg_resources import resource_filename # pylint: disable-msg=E0611
+from sys import stderr
 import bottle
-from dict_plugin import dictPlugin
-import optparse
 import os
 import redirector
-import sys
 import trampoline
-import urllib
 
 
 root = bottle.Bottle()
 
+
 @root.route('/')
 def index():
+    """ Default handler: redirector list."""
     bottle.redirect('/and/list')
 
-@root.route('/<shortcut:re:[^&?/*]+>*')
-def go_edit_that(shortcut):
-    url = '/and/edit' + '?' + urllib.urlencode({'short': shortcut})
-    bottle.redirect(url)
 
-@root.route('/<shortcut:re:[^&?/*]+>')
+@root.route('/<shortcut:re:[^&?/]+[*]?>')
 def go_there(shortcut):
+    """ Convenience shortcut for redirectors, to account for 'go' domain
+    name."""
     # FIXME: This is suboptimal. It should be possible to route request
     # for handling to another application.
     # https://github.com/defnull/bottle/issues/168
     bottle.redirect('/and/' + shortcut)
 
 @root.route('/static/<filename>')
-def send_file(filename, app):
-    return bottle.static_file(filename, root=app['static_dir'])
+def send_file(filename):
+    """ Handler for static files."""
+    return bottle.static_file(filename, root=root.static_dir)
 
 def initFromCmdLine():
+    """ Initialize application according to commandline flags."""
     app = {}
     data_dir = resource_filename(__name__, '')
     # parse command line
-    parser = optparse.OptionParser()
+    parser = OptionParser()
     option_list = [
-        optparse.make_option(
+        make_option(
             '-D', '--debug',
             action='store_true', dest='debug',
             help='enable Bottle debug mode [false]',
         ),
-        optparse.make_option(
+        make_option(
             '-n', '--nofork',
             action='store_true', dest='nofork',
             help='do not daemonize at start [false]',
         ),
-        optparse.make_option(
+        make_option(
             '-d', '--db-dir',
             dest='db_dir', help='directory for dbs [/tmp]',
         ),
-        optparse.make_option(
+        make_option(
             '-a', '--data-dir',
             dest='data_dir', help='prefix for data directories [%s]' % data_dir,
         ),
-        optparse.make_option(
+        make_option(
             '-H', '--host',
             dest='host', help='hostname to bind on [localhost]',
         ),
-        optparse.make_option(
-            '-p', '--port', type="int",
+        make_option(
+            '-p', '--port', type='int',
             dest='port', help='port to bind to [8080]',
         ),
     ]
@@ -79,15 +81,18 @@ def initFromCmdLine():
     return app
 
 def fork():
+    """ Fork helper."""
     try:
         pid = os.fork()
         if pid > 0:
-            sys.exit(0)
+            exit(0)
     except OSError, e:
-        print >> sys.stderr, "Oh dear, failed to fork: %s (%s)" % (e.errno, e.strerror)
-        sys.exit(1)
+        print >> stderr, 'Oh dear, failed to fork: %s (%s)' % \
+              (e.errno, e.strerror)
+        exit(1)
 
 def daemonize():
+    """ Turn process into a daemon."""
     # fork once, to create own session
     fork()
 
@@ -106,7 +111,8 @@ def daemonize():
     os.close(fd)
 
 def run(app):
-    """Setup some reasonable defaults (even if running as dummy), run application"""
+    """Setup some reasonable defaults (even if running as dummy), run
+    application"""
     if not app.has_key('servertype'):
         app['servertype'] = 'auto'
     if not app.get('data_dir'):
@@ -114,7 +120,7 @@ def run(app):
     if not app.get('db_dir'):
         app['db_dir'] = '/tmp'
 
-    app['static_dir'] = app['data_dir'] + '/static/'
+    root.static_dir = app['data_dir'] + '/static/'
     bottle.TEMPLATE_PATH = [ app['data_dir'] + '/views/' ]
 
     if app['debug']:
@@ -122,16 +128,15 @@ def run(app):
     if (not app['nofork']):
         daemonize()
 
-
-    trampoline.provisionDbs(app['db_dir'] + '/trampoline.db')
-    redirector.provisionDbs(app['db_dir'] + '/and.db')
+    dbfile = app['db_dir'] + '/trampoline.db'
+    trampoline.provisionDbs(dbfile)
+    redirector.provisionDbs(dbfile)
 
     root.mount(trampoline.app, '/hop')
     root.mount(redirector.app, '/and')
 
-    root.install(dictPlugin(keyword='app', dictionary=app))
-
-    bottle.run(root, host=app['host'], port=app['port'], server=app['servertype'])
+    bottle.run(root, host=app['host'], port=app['port'],
+            server=app['servertype'])
 
 def go():
     """Referenced by setup.py, main point of entry for "production" use."""

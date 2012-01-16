@@ -6,10 +6,9 @@
 
 from BeautifulSoup import BeautifulSoup
 from bottle import abort, Bottle, request, template, redirect, response
-from bottle.ext import sqlite as bottle_sqlite
+from bottle.ext import sqlite as bottle_sqlite # pylint: disable-msg=F0401
 from datetime import datetime
 from email.utils import formatdate
-from hashlib import sha1
 from multiprocessing import Lock, Process, Event
 from os import getpid
 from time import time
@@ -33,11 +32,18 @@ def fetcher(filename, base_url, event):
     while event.is_set():
         event.clear()
         for table in tables:
-            rows = c.execute('SELECT * FROM ' + table + ' WHERE token IS NOT NULL').fetchall()
+            rows = c.execute(
+                 'SELECT * FROM ' +
+                 table +
+                 ' WHERE token IS NOT NULL').fetchall()
             for row in rows:
                 url = row['url']
                 try:
-                    soup = BeautifulSoup(urlopen(url), convertEntities=BeautifulSoup.HTML_ENTITIES)
+                    f = urlopen(url)
+                    blob = f.read(2*1024*1024)
+                    f.close()
+                    soup = BeautifulSoup(blob,
+                           convertEntities=BeautifulSoup.HTML_ENTITIES)
                     title = soup.title.string
                     describe_url = ''.join([base_url, '?', urlencode({
                         'list_id': table,
@@ -45,9 +51,10 @@ def fetcher(filename, base_url, event):
                         'description': title,
                     })])
                     urlopen(describe_url)
-                except:
+                except: # pylint: disable-msg=W0702
                     continue
     c.close()
+    exit(0)
 
 
 def provisionDbs(filename):
@@ -191,12 +198,15 @@ def showRss(db):
 
 @app.route('/r/describe', name='restDescribe')
 def restSetDescription(db):
+    """ REST interface: set description for single url. Fetcher uses it to avoid
+    writing to single SQLite db from >1 process."""
     list_id = request.params.get('list_id')
     auth_token = request.params.get('token')
     description = request.params.get('description')
     if not (auth_token and description):
         abort(404)
-    db.execute('UPDATE ' + list_id + ' SET description = ?, token = NULL WHERE token = ?', (description.decode('utf-8'), auth_token))
+    db.execute('UPDATE ' + list_id + ' SET description = ?, token = NULL ' +
+        'WHERE token = ?', (description.decode('utf-8'), auth_token))
     return 'OK'
 
 
