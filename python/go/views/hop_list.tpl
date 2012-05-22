@@ -19,7 +19,7 @@
 <td class="timestamp" colspan=2>{{day}}</td>
 </tr>
 %     end
-<tr><td class="timestamp">{{url['time']}}</td><td class="url"><a href="{{url['pop_url']}}">{{url['url']}}</a></td></tr>
+<tr><td class="timestamp">{{url['time']}}</td><td class="url"><a href="{{url['pop_url']}}">{{url['description'] or url['url']}}</a></td></tr>
 %     oldday = day
 %   end
 </table>
@@ -42,7 +42,7 @@
 </tr>
 %     end
 <tr>
-<td class="timestamp">{{url['time']}}</td><td class="url"><a href="{{url['url']}}">{{url['url']}}</a></td>
+<td class="timestamp">{{url['time']}}</td><td class="url"><a href="{{url['url']}}">{{url['description'] or url['url']}}</a></td>
 </tr>
 %     oldday = day
 %   end
