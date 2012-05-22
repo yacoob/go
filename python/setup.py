@@ -11,7 +11,7 @@ setup(
     author_email='yacoob@gmail.com',
     url='http://github.com/yacoob/go',
 
-    install_requires=['bottle>=0.10', 'BeautifulSoup', 'chardet'],
+    install_requires=['bottle>=0.10', 'bottle-sqlite', 'BeautifulSoup', 'chardet'],
 
     packages=['go'],
     package_data={
