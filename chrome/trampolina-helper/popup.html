@@ -94,6 +94,12 @@ function buttons_handler(e) {
                 __open_tab(e.target.href, prefs.hide_pop);
                 __poke_background_service();
                 break;
+            case 'popAll':
+                $('div#list a').each(function(index) {
+                    __open_tab(this.href, false);
+                    });
+                __poke_background_service();
+                break;
             case 'list':
                 __open_tab(e.target.href, true);
                 break;
@@ -129,7 +135,7 @@ function init() {
         prefs = loadPrefs();
 
         // setup hrefs of the buttons
-        var urls = ['push', 'pop', 'list'];
+        var urls = ['push', 'pop', 'popAll', 'list'];
         for (var i = 0; i < urls.length; i += 1) {
             var element = 'a#' + urls[i] + '.trampolina-button';
             $(element)[0].href = prefs.base_url + '/' + urls[i];
@@ -165,6 +171,7 @@ function init() {
     <div id="trampolina-buttons">
         <a id="push" class="trampolina-button">push</a>
         <a id="pop"  class="trampolina-button">pop</a>
+        <a id="popAll" class="trampolina-button">pop all</a>
         <a id="list" class="trampolina-button">list</a>
     </div>
     <div class="trampolina-msg" id="msg"></div>

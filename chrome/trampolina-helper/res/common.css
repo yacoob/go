@@ -24,9 +24,9 @@ a:hover {
 a.trampolina-button, a.trampolina-button:visited, a.trampolina-buttom:link {
     color: white;
     background: black;
-    margin: 7px 7px;
+    margin: 3px 3px;
     padding: 3px 4px;
-    width: 60px;
+    width: 45px;
     display: inline-block;
     text-align: center;
     text-decoration: none;
