@@ -35,7 +35,7 @@ def listShortcuts(db):
         'SELECT * FROM redirector ORDER BY shortcut').fetchall()
     kwargs = {
         'list':  shortcuts,
-        'title': '- shortcuts list',
+        'title': 'shortcuts list',
     }
     return template('go_list', **kwargs)
 
@@ -71,8 +71,8 @@ def addShortcut(db):
         redirect(app.get_url('list'))
     else:
         kwargs = {
-            'message': 'Add a new shortcut:',
-            'title': '- add a new shortcut',
+            'message': 'Add a new shortcut',
+            'title': 'add a new shortcut',
         }
         return template('go_edit', long=url, short=shortcut, **kwargs)
 
@@ -94,15 +94,15 @@ def editShortcut(db):
                 (short,)).fetchone()
         if entry:
             kwargs = {
-                'message': 'Edit:',
-                'title': '- edit a shortcut',
+                'message': 'Edit shortcut',
+                'title': 'shortcut edit',
                 'short': short,
                 'long': entry['url'],
             }
         else:
             kwargs = {
-                'message': 'Add a new shortcut:',
-                'title': '- add a new shortcut',
+                'message': 'Add a new shortcut',
+                'title': 'add a shortcut',
                 'short': short,
                 'long': '',
             }
@@ -122,9 +122,8 @@ def deleteShortcut(db):
         # if it exist, remove it and redirect to edit page, as a last
         # chance to save this shortcut
         kwargs = {
-            'message': 'Old shortcut removed, but you ' +
-                'can always add it back here:',
-            'title':  '- last chance to save a shortcut!',
+            'message': 'Shortcut deleted - last chance to save it',
+            'title':  'shortcut removed',
             'short': short,
             'long': entry['url'],
         }

@@ -1,19 +1,16 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html><head>
-<title>Go {{title}}</title>
-<link rel="icon" type="image/vnd.microsoft.icon" href="/static/favicon.ico">
-<link type="text/css" rel="stylesheet" href="/static/main.css" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-</head><body>
-% include header
-<h1>Existing shortcuts</h1>
-<small><a href="/and/add">(add a new one)</a></small>
-<ul class="controls">
+<div class="row-fluid"><div class="span10 offset1 main-content">
+<table class="table table-striped">
+<thead><tr><td></td><td><b>Shortcut</b></td><td><b>URL</b></td></tr></thead>
 % for row in list:
-<li>
-<a class="controls" href="/and/del?short={{row[0]}}">✖</a>
-<a class="controls" href="/and/edit?short={{row[0]}}">✎</a>
-&nbsp; <code>{{row[0]}}</code> ➔ <code>{{row[1]}}</code></li>
+<tr>
+<td class="controls">
+<a class="btn btn-mini" href="/and/del?short={{row[0]}}"><i class="icon-remove"></i></a>
+<a class="btn btn-mini" href="/and/edit?short={{row[0]}}"><i class="icon-pencil"></i></a></td>
+<td>{{row[0]}}</td>
+<td><a href="{{row[1]}}">{{row[1]}}</a></td>
+</tr>
 % end
-</ul>
-</body></html>
+</table>
+</div></div>
+% args = { 'header': 'Existing shortcuts', 'title': get('title') }
+% rebase base **args

@@ -1,15 +1,23 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html><head>
-<title>Go {{title}}</title>
-<link rel="icon" type="image/vnd.microsoft.icon" href="/static/favicon.ico">
-<link type="text/css" rel="stylesheet" href="/static/main.css" />
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-</head><body>
-% include header
-<h1>{{message}}</h1>
-<form method="GET" action="/and/add">
-<input type="text" name="short" value="{{short}}" size=30></input> ➔
-<input type="text" name="long" value="{{long}}" size=150></input><p>
-<input type="submit" value="Go!"></input>
+<div class="row-fluid"><div class="span10 offset1 main-content">
+<form class="form-horizontal" method="GET" action="/and/add">
+<div class="control-group">
+    <label class="control-label" for="inputShort">Shortcut name</label>
+    <div class="controls">
+    <input class="input-medium" id="inputShort" placeholder="shortcut" type="text" name="short" value="{{short}}"/>
+    </div>
+</div>
+<div class="control-group">
+    <label class="control-label" for="inputLong">URL this shortcut redirects to</label>
+    <div class="controls">
+    <input class="input-xxlarge" id="inputLong" placeholder="URL" type="text" name="long" value="{{long}}"/>
+    </div>
+</div>
+<div class="control-group">
+    <div class="controls">
+    <button type="submit" class="btn btn-primary">Go!</button>
+    </div>
+</div>
 </form>
-</body></html>
+</div></div>
+% args = { 'header': get('message'), 'title': get('title') }
+% rebase base **args

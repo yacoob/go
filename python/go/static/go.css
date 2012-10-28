@@ -1,0 +1,32 @@
+/*div {
+    border: 1px solid red;
+}
+/* */
+body {
+    background: #DDD;
+    margin: 25px;
+}
+
+div.buttons {
+    text-align: right;
+}
+
+td.controls {
+    text-align: center;
+}
+
+div.main-content {
+    margin: 30px
+}
+
+tr > td.controls > a.btn {
+    visibility: hidden;
+    opacity: 0;
+    -webkit-transition: visibility 0s linear 0.5s,opacity 0.5s linear;
+}
+
+tr:hover > td.controls > a.btn {
+    visibility: visible;
+    opacity: 1;
+    -webkit-transition-delay: 0s;
+}

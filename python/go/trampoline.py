@@ -139,7 +139,7 @@ def pushUrl(db):
             app.FetcherProcess = Process(target=fetcher,
                 args=(app.db_filename, base_url, app.fetcher_flag))
             app.FetcherProcess.start()
-        return template('hop_msg', title='- trampoline push succeeded', url=url)
+        return template('hop_msg', title='trampoline push succeeded', url=url)
     else:
         redirect(app.get_url('list'))
 
@@ -180,7 +180,7 @@ def listUrls(db):
         'pop_url': app.get_url('pop'),
         'stack':  describeUrlsFromTable(db, 'stack', pop_url_base=base_url),
         'viewed': describeUrlsFromTable(db, 'viewed'),
-        'title':  '- trampoline URLs list',
+        'title':  'trampoline URLs list',
     }
     return template('hop_list', **kwargs)
 
@@ -192,7 +192,7 @@ def showRss(db):
     stack = describeUrlsFromTable(db, 'stack', pop_url_base=base_url, rss=True)
     kwargs = {
         'stack': stack,
-        'title': '- new trampoline URLs',
+        'title': 'new trampoline URLs',
         'description': 'New URLs on trampoline',
         'timestamp': formatdate(time()),
         'list_url': base_url + app.get_url('list'),

@@ -31,6 +31,7 @@ def go_there(shortcut):
     # https://github.com/defnull/bottle/issues/168
     bottle.redirect('/and/' + shortcut)
 
+@root.route('/img/<filename>')
 @root.route('/static/<filename>')
 def send_file(filename):
     """ Handler for static files."""
