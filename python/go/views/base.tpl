@@ -9,9 +9,9 @@
 
 <div class="row-fluid">
 <div class="span8">
-<h1>{{header or 'Dummy header'}}</h1>
+<h1>{{get('header','Dummy header')}}</h1>
 </div>
-<div class="span4 buttons"><div class="btn-toolbar">
+<div class="span4 align-right"><div class="btn-toolbar">
 <div class="btn-group">
     <a class="btn btn-large" href="/and/list"><i class="icon-list"></i></a>
     <a class="btn btn-large" href="/and/add"><i class="icon-plus"></i></a>
@@ -23,7 +23,9 @@
 </div></div>
 </div>
 
+<div class="row-fluid"><div class="span10 offset1 main-content">
 % include
+</div></div>
 
 </body></html>
 

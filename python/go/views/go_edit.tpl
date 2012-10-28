@@ -1,4 +1,3 @@
-<div class="row-fluid"><div class="span10 offset1 main-content">
 <form class="form-horizontal" method="GET" action="/and/add">
 <div class="control-group">
     <label class="control-label" for="inputShort">Shortcut name</label>
@@ -18,6 +17,5 @@
     </div>
 </div>
 </form>
-</div></div>
 % args = { 'header': get('message'), 'title': get('title') }
 % rebase base **args

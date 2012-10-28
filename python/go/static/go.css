@@ -1,22 +1,29 @@
-/*div {
-    border: 1px solid red;
-}
-/* */
 body {
-    background: #DDD;
     margin: 25px;
 }
 
-div.buttons {
-    text-align: right;
+.align-right {
+    text-align: right !important;
 }
 
-td.controls {
-    text-align: center;
+.center {
+    text-align: center !important;
 }
 
 div.main-content {
     margin: 30px
+}
+
+td.timestamp {
+    text-align: right !important;
+    width: 10%;
+    font-style: italic;
+    padding-right: 1em;
+}
+
+.table-bordered {
+    margin-left: 3em;
+    margin-right: 3em;
 }
 
 tr > td.controls > a.btn {
