@@ -15,7 +15,7 @@ function load_options() {
         if (prefs[n]) {
             checkbox.attr('checked', 'checked');
         } else {
-            checkbox.attr('checked', '');
+            checkbox.removeAttr('checked');
         };
     };
 };

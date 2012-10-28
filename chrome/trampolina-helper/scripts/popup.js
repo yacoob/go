@@ -7,12 +7,19 @@ var button_clicked_delay = 250;
 var prefs = {};
 
 
-// open a new tab with specified url, close the popup if requested
-function __open_tab(url, close_window) {
-    if (!url) {
+// open a new tabs for specified urls, close the popup if requested
+function openTabs(urls, close_window, focused) {
+    if (!urls instanceof Array) {
         return undefined;
     };
-    chrome.tabs.create({url: url});
+    console.log(urls);
+    for (var i = 0; i < urls.length; i++) {
+        var url = urls[i];
+        chrome.tabs.create({
+            url: url, active: focused,
+        });
+    };
+    setTimeout(__poke_background_service, message_delay);
     if (close_window) {
         window.close();
     };
@@ -76,17 +83,17 @@ function buttons_handler(e) {
                 });
                 break;
             case 'pop':
-                __open_tab(e.target.href, prefs.hide_pop);
-                __poke_background_service();
+                openTabs([e.target.href], prefs.hide_pop, true);
                 break;
             case 'popAll':
+                var urls = [];
                 $('div#list a').each(function(index) {
-                    __open_tab(this.href, false);
-                    });
-                __poke_background_service();
+                    urls.push(this.href);
+                });
+                openTabs(urls, prefs.hide_pop, false);
                 break;
             case 'list':
-                __open_tab(e.target.href, true);
+                openTabs([e.target.href], true, true);
                 break;
         };
 
@@ -101,10 +108,7 @@ function buttons_handler(e) {
 function urls_handler(e) {
     if ($(e.target).is('a')) {
         // open a new tab with clicked URL
-        __open_tab(e.target.href, prefs.hide_list);
-
-        // poke background task to refresh the list
-        __poke_background_service();
+        openTabs([e.target.href], prefs.hide_list, false);
 
         // inhibit the default click action
         e.preventDefault();
@@ -116,9 +120,10 @@ function urls_handler(e) {
 // update popup URL list
 function updatePopupList(data) {
     var html = '';
-    for (var prop in data) {
-      var u = data[prop];
-      html += '<a href="' + u['pop_url'] + '">' + u['description'] + '</a><br>';
+    var keys = Object.keys(data).sort().reverse();
+    for (var i = 0; i < keys.length ; i++) {
+      var u = data[keys[i]];
+      html += '<a href="' + u.pop_url + '">' + u.description + '</a><br>';
     }
     $('div#list').html(html);
 }
