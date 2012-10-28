@@ -10,5 +10,4 @@
 </tr>
 % end
 </table>
-% args = { 'header': 'Existing shortcuts', 'title': get('title') }
-% rebase base **args
+% rebase base title='shortcuts list', header='Existing shortcuts'

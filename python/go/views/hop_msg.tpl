@@ -1,3 +1,2 @@
 <pre>{{url}}</pre>
-% args = { 'header': 'URL pushed!', 'title': get('title') }
-% rebase base **args
+% rebase base header='URL pushed!', title='trampoline push scceeded'

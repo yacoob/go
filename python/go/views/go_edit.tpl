@@ -17,5 +17,4 @@
     </div>
 </div>
 </form>
-% args = { 'header': get('message'), 'title': get('title') }
-% rebase base **args
+% rebase base header=message, title=title
