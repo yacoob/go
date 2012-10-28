@@ -5,19 +5,6 @@ function load_options() {
     // set form controls accordingly
     $('input#base-url').val(prefs.base_url);
     $('input#poll-interval').val(prefs.poll_interval);
-
-    // load "hide preferences"
-    for (var i = 0; i < __hide_prefs.length; i += 1) {
-        var n = __hide_prefs[i];
-        var checkbox = $('input#' + n);
-
-        // tick checkboxes
-        if (prefs[n]) {
-            checkbox.attr('checked', 'checked');
-        } else {
-            checkbox.removeAttr('checked');
-        };
-    };
 };
 
 function save_options() {
@@ -26,12 +13,6 @@ function save_options() {
 
     prefs.base_url = $('input#base-url').val();
     prefs.poll_interval = $('input#poll-interval').val();
-
-    // save "hide preferences"
-    for (var i = 0; i < __hide_prefs.length; i += 1) {
-        var n = __hide_prefs[i];
-        prefs[n] = $('input#' + n).attr('checked');
-    };
     savePrefs(prefs);
 
     // inform user that his changes have been saved
