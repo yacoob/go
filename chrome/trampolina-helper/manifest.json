@@ -7,13 +7,14 @@
   "browser_action": {
     "default_icon": "res/icon48.png",
     "default_title": "Sproing!",
-    "popup": "popup.html"
+    "default_popup": "popup.html"
   },
   "background": {
     "page": "background.html"
   },
   "options_page": "options.html",
   "permissions": [
+    "background",
     "tabs",
     "http://*/",
     "https://*/"
