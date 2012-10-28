@@ -23,9 +23,13 @@
 % if len(stack):
 <h3>New URLs</h3>
 % present_list(stack, 'pop_url')
+% end
+
 <p>&nbsp;</p>
+
 % if len(viewed):
 <h3>Old URLs</h3>
 % present_list(viewed, 'url')
+% end
 
 % rebase base header='Trampoline', title='trampoline URLs list'
