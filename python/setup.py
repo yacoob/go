@@ -15,7 +15,7 @@ setup(
 
     packages=['go'],
     package_data={
-        'go': ['static/favicon.ico', 'static/main.css', 'views/*.tpl']
+        'go': ['static/*.*', 'views/*.tpl']
     },
     entry_points={
         'console_scripts': [
