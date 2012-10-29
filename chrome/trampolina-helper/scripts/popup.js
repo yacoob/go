@@ -3,28 +3,25 @@ var PopUp = {
   message_delay: 2500,
   // Time for which button should be highlighted after click.
   button_clicked_delay: 250,
-  // Preferences object.
-  prefs: {},
 };
 
 
 // Poke background service to check for new items.
 function pokeBackgroundService() {
-  console.debug('popup.html: sending refreshList');
   chrome.extension.sendMessage({msg: 'refreshList'});
 };
 
 
 // Display message in the popup, close it if requested.
 function displayMessage(msg, close_window) {
-    var status = $('div#msg');
-    status.html(msg).toggle('fast');
-    setTimeout(function() {
-        status.toggle('fast');
-        if (close_window) {
-            window.close();
-        };
-    }, PopUp.message_delay);
+  var status = $('div#msg');
+  status.html(msg).toggle('fast');
+  setTimeout(function() {
+    status.toggle('fast');
+    if (close_window) {
+      window.close();
+    };
+  }, PopUp.message_delay);
 };
 
 
@@ -68,6 +65,7 @@ function pushCurrentTab(pushUrl) {
 function updatePopupList(data) {
   var html = '';
   var keys = Object.keys(data).sort().reverse();
+  // FIXME: handle list larger than popup size.
   for (var i = 0; i < keys.length ; i++) {
     var u = data[keys[i]];
     html += '<a href="' + u.pop_url + '">' + u.description + '</a><br>';
@@ -123,15 +121,12 @@ function urls_handler(e) {
 
 // Load options, setup handlers, load initial stack state.
 function init() {
-  $(document).ready(function() {
-    // Load preferences.
-    PopUp.prefs = loadPrefs();
-
+  loadPrefsAndRun(function(prefs) {
     // Setup buttons.
     var urls = ['push', 'pop', 'popAll', 'list'];
     for (var i = 0; i < urls.length; i += 1) {
       var element = 'a#' + urls[i] + '.trampolina-button';
-      $(element)[0].href = PopUp.prefs.base_url + '/' + urls[i];
+      $(element)[0].href = prefs.base_url + '/' + urls[i];
     };
 
     // Setup click handlers.
@@ -141,21 +136,16 @@ function init() {
     // Add messaging listener.
     chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
       switch(request.msg) {
-        case 'updateList':
-          console.debug('popup.html: got updateList, received a new URL list');
+        case 'dataUpdated':
           updatePopupList(request.chunk);
           break;
-        case 'reloadPrefs':
-          console.debug('popup.html: got reloadPrefs, reloading my preferences');
-          PopUp.prefs = loadPrefs();
-          break;
-        };
-      });
+      };
+    });
 
     // Get initial stack state.
     pokeBackgroundService();
   });
 };
 
-// Hook init up.
-document.addEventListener('DOMContentLoaded', init);
+// Run init once page loads.
+$(init);

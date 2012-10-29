@@ -1,35 +1,26 @@
-function load_options() {
-    // load preferences
-    var prefs = loadPrefs();
-
-    // set form controls accordingly
+function loadOptions() {
+  loadPrefsAndRun(function(prefs) {
     $('input#base-url').val(prefs.base_url);
     $('input#poll-interval').val(prefs.poll_interval);
+    $('#submit').click(saveOptions);
+  });
 };
 
-function save_options() {
-    // start with an empty object
-    var prefs = {};
 
-    prefs.base_url = $('input#base-url').val();
-    prefs.poll_interval = $('input#poll-interval').val();
-    savePrefs(prefs);
+function saveOptions() {
+  savePrefs({
+    base_url: $('input#base-url').val(),
+    poll_interval: parseInt($('input#poll-interval').val()) || 0,
+  });
 
-    // inform user that his changes have been saved
-    var status = $('div#status');
-    status.html('Settings have been saved.').toggle('fast');
-    setTimeout(function() {
-        status.toggle('fast');
-    }, 3000);
-
-    // inform everyone that we've just possibly saved prefs
-    chrome.extension.sendRequest({msg: 'reloadPrefs'});
+  // Inform user that his changes have been saved.
+  var status = $('div#status');
+  status.html('Settings have been saved.').toggle('fast');
+  setTimeout(function() {
+    status.toggle('fast');
+  }, 3000);
 };
 
-function init() {
-    load_options();
-    document.getElementById('submit').addEventListener('click', save_options);
-}
 
-// Hook init up.
-document.addEventListener('DOMContentLoaded', init);
+// Load options on page load.
+$(loadOptions);

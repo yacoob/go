@@ -1,80 +1,69 @@
-// maximum number of URLs to show in the popup
-var __max_items = 6;
-
-// preferences object
-var prefs = {};
-
-// timer object
+// Timer object for scheduled refresh of server data.
 var t;
 
 
-// force refresh
+// Force a refresh.
 function poke() {
-    stopUpdates();
-    t = window.setTimeout(refresh, 500);
+  stopUpdates();
+  t = window.setTimeout(refresh, 500);
 };
 
 
-// stop updates
+// Stop automatic refresh.
 function stopUpdates() {
-    window.clearTimeout(t);
+  window.clearTimeout(t);
 };
 
 
-// update extension icon's badge
+// Update extension icon's badge.
 function updateBadge(num) {
-    if (num) {
-        chrome.browserAction.setBadgeText({text: num + ''});
-    } else {
-        chrome.browserAction.setBadgeText({text: ''});
-    };
+  if (num) {
+    chrome.browserAction.setBadgeText({text: num + ''});
+  } else {
+    chrome.browserAction.setBadgeText({text: ''});
+  };
 };
 
 
+// Update local data.
 function updateData(data) {
-    $('div#url-list').data('urls', data);
-    updateBadge(Object.keys(data).length);
-    console.debug('background.html: sending updateList');
-    chrome.extension.sendMessage({msg: 'updateList', chunk: data});
+  $('div#url-list').data('urls', data);
+  updateBadge(Object.keys(data).length);
+  console.debug('background.html: local data updated.');
+  chrome.extension.sendMessage({msg: 'dataUpdated', chunk: data});
 }
 
 
-// refresh Trampoline data
-function refresh(callback) {
+// Fetch data from remote server.
+function refresh() {
+  loadPrefsAndRun(function(prefs) {
     jQuery.getJSON(
-        prefs.base_url + '/r/stack/*', '', updateData
+      prefs.base_url + '/r/stack/*', '', updateData
     ).error(function() {
-        updateData({});
+      updateData({});
     });
 
-    // schedule next run
+    // Schedule next refresh.
     t = window.setTimeout(refresh, prefs.poll_interval * 1000);
+  });
 };
 
 
-// set up infrastructure, start the refresh cycle
+// Set up infrastructure, start the refresh cycle.
 function init() {
-    // load options
-    prefs = loadPrefs();
-
-    // add listener
-    chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
-        switch(request.msg) {
-            case 'refreshList':
-                console.debug('background.html: refreshList received, requerying list from RSS');
-                poke()
-                break;
-            case 'reloadPrefs':
-                console.debug('background.html: reloadPrefs received, reloading my prefences');
-                prefs =loadPrefs();
-                console.debug('background.html: sending refreshList');
-                chrome.extension.sendMessage({msg: 'refreshList'});
-        };
+  // Add listeners.
+  chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
+    switch(request.msg) {
+      case 'refreshList':
+      case 'prefsChanged':
+        poke()
+        break;
+      };
     });
 
     // start refresh cycle
     refresh();
 };
 
-// Hook init up.
-document.addEventListener('DOMContentLoaded', init);
+// Run init once page loads.
+$(init);
