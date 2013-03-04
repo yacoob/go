@@ -11,8 +11,9 @@ from datetime import datetime
 from email.utils import formatdate
 from multiprocessing import Lock, Process, Event
 from os import getpid
+from socket import setdefaulttimeout
 from time import time
-from urllib import urlopen, urlencode
+from urllib import urlencode, urlopen
 from urlparse import urlunsplit
 from uuid import uuid4
 import sqlite3
@@ -26,6 +27,8 @@ app.fetcher_flag = Event()
 def fetcher(filename, base_url, event):
     """ Fetch titles for all enqueued URls, update db."""
     print 'Fetcher process started as pid <%s>' % getpid()
+    FETCHER_TIMEOUT = 5
+    setdefaulttimeout(FETCHER_TIMEOUT)
     tables = ('stack', 'viewed')
     c = sqlite3.connect(filename)
     c.row_factory = sqlite3.Row
@@ -35,24 +38,27 @@ def fetcher(filename, base_url, event):
             rows = c.execute(
                  'SELECT * FROM ' +
                  table +
-                 ' WHERE token IS NOT NULL').fetchall()
+                 ' WHERE token IS NOT NULL ' +
+                 ' ORDER BY timestamp DESC').fetchall()
             for row in rows:
+                print 'Working on row: <%s>' % row['url']
                 url = row['url']
                 try:
+                    title = ''
                     f = urlopen(url)
                     blob = f.read(2*1024*1024)
                     f.close()
                     soup = BeautifulSoup(blob,
                            convertEntities=BeautifulSoup.HTML_ENTITIES)
                     title = soup.title.string
-                    describe_url = ''.join([base_url, '?', urlencode({
-                        'list_id': table,
-                        'token': row['token'],
-                        'description': title,
-                    })])
-                    urlopen(describe_url)
                 except: # pylint: disable-msg=W0702
-                    continue
+                    pass
+                describe_url = ''.join([base_url, '?', urlencode({
+                    'list_id': table,
+                    'token': row['token'],
+                    'description': title,
+                })])
+                urlopen(describe_url)
     c.close()
     exit(0)
 
@@ -87,7 +93,7 @@ def _describeUrl(row, pop_url_base=None, rss=False):
         'time': date.strftime('%H:%M'),
         'url': row['url'],
         'id': url_id,
-        'description': row['description'] or '',
+        'description': row['description'] or row['url'],
     }
     if pop_url_base:
         description.update({
@@ -133,7 +139,7 @@ def pushUrl(db):
             app.FetcherProcess = Process(target=fetcher,
                 args=(app.db_filename, base_url, app.fetcher_flag))
             app.FetcherProcess.start()
-        return template('hop_msg', title='- trampoline push succeeded', url=url)
+        return template('hop_msg', url=url)
     else:
         redirect(app.get_url('list'))
 
@@ -174,7 +180,6 @@ def listUrls(db):
         'pop_url': app.get_url('pop'),
         'stack':  describeUrlsFromTable(db, 'stack', pop_url_base=base_url),
         'viewed': describeUrlsFromTable(db, 'viewed'),
-        'title':  '- trampoline URLs list',
     }
     return template('hop_list', **kwargs)
 
@@ -186,7 +191,7 @@ def showRss(db):
     stack = describeUrlsFromTable(db, 'stack', pop_url_base=base_url, rss=True)
     kwargs = {
         'stack': stack,
-        'title': '- new trampoline URLs',
+        'title': 'new trampoline URLs',
         'description': 'New URLs on trampoline',
         'timestamp': formatdate(time()),
         'list_url': base_url + app.get_url('list'),
@@ -203,7 +208,7 @@ def restSetDescription(db):
     list_id = request.params.get('list_id')
     auth_token = request.params.get('token')
     description = request.params.get('description')
-    if not (auth_token and description):
+    if not (auth_token):
         abort(404)
     db.execute('UPDATE ' + list_id + ' SET description = ?, token = NULL ' +
         'WHERE token = ?', (description.decode('utf-8'), auth_token))

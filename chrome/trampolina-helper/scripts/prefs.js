@@ -1,80 +1,44 @@
-// preferences-related functions
+// Preferences-related functions, shared between all pages of extension.
 
-// iterator helper
-var __hide_prefs = [ 'hide_push', 'hide_pop', 'hide_list' ];
 
-var __minimal_poll_interval = 30;
-
-// default values of preferences, as stored in localStorage (strings)
-var __default_prefs = {
-    'base_url':         'http://go/hop',    // base URL of Trampolina
-    'poll_interval':    '600',              // how often should we poll RSS?
-    'hide_push':        '1',                // hide popup after 'push' button was clicked?
-    'hide_pop':         '1',                // hide popup after 'pop' button was clicked?
-    'hide_list':        '0'                 // hide popup after URL on a list was clicked?
+var Prefs = {
+  // Minimal interval at which extension will update data from server, in
+  // seconds.
+  minimal_poll_interval: 30,
+  // Default values of preferences.
+  default_prefs: {
+    'base_url':       'http://go/hop',    // Server URL.
+    'poll_interval':  120,                // How often should we poll server for updates?
+  },
 };
 
-// load existing preferences, set default values if there are no prefs yet
-function loadPrefs() {
-    prefs = {};
+// Where should we store data?
+storage = chrome.storage.local;
 
-    // base_url
-    prefs.base_url = localStorage['base_url'];
-    if (!prefs.base_url) {
-        prefs.base_url = __default_prefs.base_url;
-        localStorage['base_url'] = prefs.base_url;
+
+// Run func with current set of preferences provided.
+function loadPrefsAndRun(func) {
+  var keys = Object.keys(Prefs.default_prefs);
+  storage.get(keys, function(items) {
+    var prefs = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      prefs[key] = items[key] || Prefs.default_prefs[key];
     };
-
-    // RSS poll interval
-    prefs.poll_interval = localStorage['poll_interval'];
-    if (!prefs.poll_interval) {
-        prefs.poll_interval = __default_prefs.poll_interval;
+    if (func instanceof Function) {
+      func(prefs);
     };
-    prefs.poll_interval = parseInt(prefs.poll_interval);
-
-    // "hide preferences"
-    // localStorage can only store strings, so some massaging is needed
-    for (var i = 0; i < __hide_prefs.length; i += 1) {
-        var n = __hide_prefs[i];
-        var tmp = localStorage[n];
-
-        if (!tmp) {
-            tmp = __default_prefs[n];
-            localStorage[n] = tmp;
-        };
-
-        // set value in prefs
-        prefs[n] = (tmp == '1') ? true : false;
-    };
-
-    // return preferences object;
-    return prefs;
+  });
 };
 
 
-// save preferences, using values from argument
+// Save preferences, using values from argument.
 function savePrefs(prefs) {
-    // base_url
-    var tmp = prefs.base_url.trim();
-    // strip '/' from the end of the URL
-    if (tmp[tmp.length-1] == '/') {
-      tmp = tmp.slice(0, -1);
-    };
-    localStorage['base_url'] = tmp;
-
-    // RSS poll interval
-    tmp = prefs.poll_interval + '';
-    var tmp_int = parseInt(tmp);
-    if (isNaN(tmp_int) || (tmp_int < __minimal_poll_interval)) {
-        tmp = __default_prefs.poll_interval;
-    };
-    localStorage['poll_interval'] = tmp;
-
-
-    // "hide preferences"
-    for (var i = 0; i < __hide_prefs.length; i += 1) {
-        var n = __hide_prefs[i];
-        tmp = (prefs[n]) ? 1 : 0;
-        localStorage[n] = tmp;
-    };
+  var items = {
+    'base_url': prefs.base_url.trim().replace(/\/$/, ''),
+    'poll_interval': prefs.poll_interval < Prefs.minimal_poll_interval ? Prefs.minimal_poll_interval : prefs.poll_interval,
+  };
+  storage.set(items);
+  // Inform other extension pages that we saved (new?) prefs.
+  chrome.extension.sendMessage({msg: 'prefsChanged'});
 };

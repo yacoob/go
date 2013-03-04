@@ -9,9 +9,9 @@
 % for id in sorted(stack.keys(), reverse=True):
 % row = stack[id]
     <item>
-        <title>{{row['url']}}</title>
+        <title>{{row['description']}}</title>
         <link>{{row['pop_url']}}</link>
-        <description>{{row['url']}}</description>
+        <description>{{row['description']}}</description>
         <pubDate>{{row['date']}}</pubDate>
     </item>
 % end
