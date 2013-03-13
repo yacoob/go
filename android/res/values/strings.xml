@@ -3,11 +3,16 @@
     <string name="app_name">Trampoline</string>
     <string name="prefs_base_url">Server URL</string>
     <string name="prefs_wifi_name">Home network name</string>
+    <string name="prefs_refresh">Refresh data periodically?</string>
+    <string name="prefs_refresh_on">Will update URL lists every 5s.</string>
+    <string name="prefs_refresh_off">Call "refresh" from menu when you feel like it.</string>
+    <string name="prefs_refresh_frequency">Frequency of data refresh</string>
     <string name="menu_main_refresh">Refresh</string>
     <string name="menu_main_prefs">Preferences</string>
     <string name="menu_main_exit">Exit app</string>
+    <string name="msg_refresh_started">Refreshing URL list(s)...</string>
     <string name="fetch_failed">I had problems talking to Trampoline server.</string>
-    <string name="offline_indicator">(stale)</string>
+    <string name="offline_indicator">(offline)</string>
     <string name="DEFAULT_BASE_URL">http://192.168.1.34:8080/hop</string>
     <string name="activity_main">Trampoline</string>
     <string name="activity_preferences">Trampoline preferences</string>

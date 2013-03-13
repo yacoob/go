@@ -2,10 +2,13 @@ package org.yacoob.trampoline;
 
 import java.util.regex.Matcher;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
+import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
@@ -16,43 +19,36 @@ public final class HopPreferences extends PreferenceActivity implements
         OnSharedPreferenceChangeListener {
 
     /**
-     * Array enumerating all EditTextPreferences in this activity. We use this
-     * list for things like summaries updates.
+     * Array enumerating all EditTextPreferences in this activity. It's used for summaries updates.
      */
     private static String[] editTextPrefs = {
             "baseUrl", "wifiName"
     };
 
+    /**
+     * Array enumerating all ListPreferences in this activity. It's used for summaries updates.
+     */
+    private static String[] listPrefs = {
+        "refreshFrequency",
+    };
+
     /** Preferences object. */
     private SharedPreferences prefs;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.preference.PreferenceActivity#onCreate(android.os.Bundle)
-     */
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.preferences);
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         setSummaries();
         prefs.registerOnSharedPreferenceChangeListener(this);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see android.content.SharedPreferences.OnSharedPreferenceChangeListener#
-     * onSharedPreferenceChanged(android.content.SharedPreferences,
-     * java.lang.String)
-     */
     @Override
-    public void onSharedPreferenceChanged(
-            final SharedPreferences sharedPreferences, final String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences,
+            final String key) {
 
         // Unregister as handler to avoid multiple calls on edits.
         prefs.unregisterOnSharedPreferenceChangeListener(this);
@@ -74,9 +70,28 @@ public final class HopPreferences extends PreferenceActivity implements
             final Matcher m = Hop.URLPATTERN.matcher(baseUrl);
             if (!m.matches()) {
                 final String defaultUrl = getString(R.string.DEFAULT_BASE_URL);
-                ((EditTextPreference) findPreference("baseUrl"))
-                        .setText(defaultUrl);
+                ((EditTextPreference) findPreference("baseUrl")).setText(defaultUrl);
             }
+        }
+
+        // TODO: handle home network change (refresh)
+
+        // Check whether service is running, change its state according to user preferences.
+        if (key.equals("refreshLists")) {
+            final Intent intent = new Intent(this, HopRefreshService.class);
+            if (prefs.getBoolean("refreshLists", false)) {
+                intent.setAction(HopRefreshService.RESTART_REFRESH_ACTION);
+            } else {
+                intent.setAction(HopRefreshService.CANCEL_REFRESH_ACTION);
+            }
+            startService(intent);
+        }
+
+        // Check whether frequency of data refreshes need to be adjusted.
+        if (key.equals("refreshFrequency")) {
+            final Intent intent = new Intent(this, HopRefreshService.class);
+            intent.setAction(HopRefreshService.RESTART_REFRESH_ACTION);
+            startService(intent);
         }
 
         // Set summaries on prefs screen, re-register as handler.
@@ -85,13 +100,18 @@ public final class HopPreferences extends PreferenceActivity implements
     }
 
     /**
-     * Updates the summaries in activity. Too bad Android doesn't offer a
-     * convenience method to do that.
+     * Updates the summaries in activity. Too bad Android doesn't offer a convenience method to do
+     * that.
      */
     private void setSummaries() {
         for (final String key : editTextPrefs) {
-            final EditTextPreference p = (EditTextPreference) findPreference(key);
+            final Preference p = findPreference(key);
             p.setSummary(prefs.getString(key, null));
+        }
+
+        for (final String key : listPrefs) {
+            final ListPreference p = (ListPreference) findPreference(key);
+            p.setSummary(p.getEntry());
         }
     }
 }
