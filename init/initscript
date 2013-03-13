@@ -15,16 +15,19 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Go - URL redirector and trampoline"
 NAME=go-runner
 BASENAME=${NAME%.*}
-DAEMON=/usr/local/bin/$NAME
-PIDFILE=/var/run/$NAME.pid
-SCRIPTNAME=/etc/init.d/$BASENAME
-
-# Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
+PIDFILE=/var/run/${NAME}.pid
+SCRIPTNAME=/etc/init.d/${BASENAME}
 
 # Read configuration variable file
 [ -r /etc/default/$BASENAME ] && . /etc/default/$BASENAME || exit 0
-DAEMON_ARGS="-d $GO_DB -p $GO_PORT -H $GO_HOST"
+DAEMON_ARGS="-d ${GO_DIR} -p ${GO_PORT} -H ${GO_HOST}"
+
+VENV="2013-03-13"
+CURRENT_VENV="${GO_DIR}/venvs/${VENV}"
+DAEMON=${CURRENT_VENV}/bin/${NAME}
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
