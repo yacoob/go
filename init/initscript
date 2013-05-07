@@ -22,7 +22,7 @@ SCRIPTNAME=/etc/init.d/${BASENAME}
 [ -r /etc/default/$BASENAME ] && . /etc/default/$BASENAME || exit 0
 DAEMON_ARGS="-d ${GO_DIR} -p ${GO_PORT} -H ${GO_HOST}"
 
-VENV="2013-03-13"
+VENV=${GO_VENV}
 CURRENT_VENV="${GO_DIR}/venvs/${VENV}"
 DAEMON=${CURRENT_VENV}/bin/${NAME}
 
