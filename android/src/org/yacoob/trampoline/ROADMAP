@@ -1,5 +1,0 @@
-* verify pause/resume behaviors for activities
-* day-based separators for list
-* 'viewed' list
-* optional notification about new data when activity isn't present.
-* s/RTC/RTC_WAKE/?

@@ -41,8 +41,6 @@ to stack from the first one, and you pop from the stack on the other one.
 `/hop/r/` contains rudimentary REST interface for Trampoline module.
 
 ## Extra bits
-`android` directory contains simple Android client for Trampoline module.
-
 `chrome` directory contains simple Chrome addon, that allows you to
 push/pop/interact with Trampoline part of go without fiddling with URLs on your
 own. Remember to configure it properly before using. For the time being, it's
