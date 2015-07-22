@@ -1,0 +1,18 @@
+[Unit]
+Description=Go URL redirector service
+Requires=local-fs.target
+After=network.target
+
+[Service]
+Type=forking
+EnvironmentFile=/etc/default/go-runner
+# Sadly, systemd doesn't like relative paths for ExecStart. This means we can't put ${GO_DIR} at the beginning of it.
+ExecStart=/var/lib/go/go-runner -d ${GO_DIR} -p ${GO_PORT} -H ${GO_HOST}
+# Same goes for PIDFile. Plus there's no variable expansion in the lines below.
+# cf. http://lists.freedesktop.org/archives/systemd-devel/2013-April/010598.html
+PIDFile=/var/lib/go/go-runner.pid
+User=go
+Group=go
+
+[Install]
+WantedBy=multi-user.target
