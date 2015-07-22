@@ -4,11 +4,10 @@
 
 """ Main module."""
 
+from daemonize import Daemonize
 from optparse import OptionParser, make_option
 from pkg_resources import resource_filename  # pylint: disable-msg=E0611
-from sys import stderr
 import bottle
-import os
 import redirector
 import trampoline
 
@@ -98,36 +97,16 @@ def initFromCmdLine():
     return app
 
 
-def fork():
-    """ Fork helper."""
-    try:
-        pid = os.fork()
-        if pid > 0:
-            exit(0)
-    except OSError as e:
-        print >> stderr, 'Oh dear, failed to fork: %s (%s)' % \
-            (e.errno, e.strerror)
-        exit(1)
+def startServing(app):
+    dbfile = app['db_dir'] + '/trampoline.db'
+    trampoline.provisionDbs(dbfile)
+    redirector.provisionDbs(dbfile)
 
+    root.mount(trampoline.app, '/hop')
+    root.mount(redirector.app, '/and')
 
-def daemonize():
-    """ Turn process into a daemon."""
-    # fork once, to create own session
-    fork()
-
-    # start new session
-    os.setsid()
-
-    # make sure we won't get a controlling terminal, ever
-    fork()
-    os.chdir('/')
-    os.umask(0)
-
-    fd = os.open(os.devnull, os.O_RDWR)
-    os.dup2(fd, 0)
-    os.dup2(fd, 1)
-    os.dup2(fd, 2)
-    os.close(fd)
+    bottle.run(root, host=app['host'], port=app['port'],
+               server=app['servertype'])
 
 
 def run(app):
@@ -145,18 +124,14 @@ def run(app):
 
     if app['debug']:
         bottle.debug(True)
-    if (not app['nofork']):
-        daemonize()
-
-    dbfile = app['db_dir'] + '/trampoline.db'
-    trampoline.provisionDbs(dbfile)
-    redirector.provisionDbs(dbfile)
-
-    root.mount(trampoline.app, '/hop')
-    root.mount(redirector.app, '/and')
-
-    bottle.run(root, host=app['host'], port=app['port'],
-               server=app['servertype'])
+    if not app['nofork']:
+        pidfile_path = app['db_dir'] + '/go-runner.pid'
+        print pidfile_path
+        daemon = Daemonize(app='go', pid=pidfile_path,
+                           action=lambda: startServing(app))
+        daemon.start()
+    else:
+        startServing(app)
 
 
 def go():
@@ -164,7 +139,7 @@ def go():
     run(initFromCmdLine())
 
 
-if (__name__ == '__main__'):
+if __name__ == '__main__':
     # Setup full application on localhost, in debug mode, without forking.
     dummy_app = {
         'debug': True, 'nofork': True, 'host': 'localhost', 'port': '8080',
