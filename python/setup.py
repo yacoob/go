@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
-from glob import glob
+from setuptools import setup
 
 setup(
     name='go',
     description='URL redirector with a twist',
-    version='0.3',
+    version='0.4',
     author='Jakub Turski',
     author_email='yacoob@gmail.com',
     url='http://github.com/yacoob/go',
     install_requires=[
-        'bottle>=0.10',
+        'bottle>=0.10, <0.11',
         'bottle-sqlite',
         'BeautifulSoup',
-        'chardet'],
+        'chardet',
+        'daemonize'],
     packages=['go'],
     package_data={
         'go': [
