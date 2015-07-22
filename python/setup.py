@@ -22,4 +22,5 @@ setup(
             'views/*.tpl']},
     entry_points={
         'console_scripts': ['go-runner = go.go:go'],
-    })
+    },
+    zip_safe=False)
