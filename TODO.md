@@ -1,6 +1,8 @@
 # Eternal TODO list:
 
-* chrome extension: warn if url has already been seen
-* address all FIXMEs in the code;
-* sanitization & validation of url parameters;
-* perhaps a form for /hop/push?
+* python3 migration
+* ...or maybe a single-page app with vue or angulardart?
+* dockerize
+* mobile layout for the ui
+* warn on push if url has already been seen
+* android client
